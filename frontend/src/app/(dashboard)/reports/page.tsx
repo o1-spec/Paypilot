@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import TopNavbar from '@/components/TopNavbar';
 import { fetchCustomers, fetchInvoices, fetchPayments, Customer, Invoice, Payment, formatNaira } from '@/lib/api';
-import { BarChart3, Search, TrendingUp, Clock, AlertTriangle, RefreshCw, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Search, TrendingUp, Clock, AlertTriangle, RefreshCw, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface CustomerReportSummary {
@@ -36,18 +36,18 @@ export default function ReportsPage() {
 
       // Compile a comprehensive aggregate summary list for each customer
       const compiled: CustomerReportSummary[] = customers.map(cust => {
-        const custInvoices = invoices.filter(inv => inv.customer_id === cust.id);
-        const custPayments = payments.filter(pay => pay.customer_id === cust.id);
+        const custInvoices = invoices.filter(inv => inv.customer === cust.id);
+        const custPayments = payments.filter(pay => pay.customer === cust.id);
         
         const totalInvoiced = custInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-        const totalPaid = custPayments.reduce((sum, pay) => pay.status === 'reconciled' ? sum + pay.amount : sum, 0);
+        const totalPaid = custPayments.reduce((sum, pay) => pay.status === 'MATCHED' ? sum + pay.amount : sum, 0);
         
-        // Outstanding balance calculations (invoice amount minus payments against that invoice)
+        // Outstanding balance calculations
         let outstanding = 0;
         custInvoices.forEach(inv => {
-          if (inv.status === 'pending' || inv.status === 'partial') {
+          if (inv.status === 'PENDING' || inv.status === 'PARTIAL') {
             const invoicePaidSum = custPayments
-              .filter(pay => pay.invoice_id === inv.id && pay.status === 'reconciled')
+              .filter(pay => pay.invoice === inv.id && pay.status === 'MATCHED')
               .reduce((sum, pay) => sum + pay.amount, 0);
             outstanding += Math.max(0, inv.amount - invoicePaidSum);
           }
@@ -55,7 +55,7 @@ export default function ReportsPage() {
 
         return {
           id: cust.id,
-          name: cust.name,
+          name: cust.full_name,
           businessName: cust.business_name,
           virtualAccount: cust.virtual_account?.account_number || 'N/A',
           totalInvoiced,
@@ -79,9 +79,9 @@ export default function ReportsPage() {
   }, []);
 
   const filteredSummaries = summaries.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.virtualAccount.includes(searchQuery)
+    (s.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.businessName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.virtualAccount || '').includes(searchQuery)
   );
 
   // Merchant global aggregates
@@ -191,7 +191,7 @@ export default function ReportsPage() {
                     <tr key={summary.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                       <td className="py-4.5 px-6 font-semibold text-slate-900">
                         {summary.name}
-                        <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{summary.businessName}</span>
+                        <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{summary.businessName || 'N/A'}</span>
                       </td>
                       <td className="py-4.5 px-6 font-mono font-semibold text-slate-700">{summary.virtualAccount}</td>
                       <td className="py-4.5 px-6 font-semibold text-slate-900">{formatNaira(summary.totalInvoiced)}</td>

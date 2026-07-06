@@ -16,7 +16,7 @@ export default function CustomersPage() {
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [businessName, setBusinessName] = useState('');
@@ -47,9 +47,14 @@ export default function CustomersPage() {
     setActionError(null);
     setActionSuccess(null);
     try {
-      const newCust = await createCustomer({ name, email, phone, business_name: businessName });
-      setActionSuccess(`Customer ${newCust.name} created! VA details provisioned.`);
-      setName('');
+      const newCust = await createCustomer({ 
+        full_name: fullName, 
+        email, 
+        phone, 
+        business_name: businessName 
+      });
+      setActionSuccess(`Customer ${newCust.full_name} created! VA details provisioned.`);
+      setFullName('');
       setEmail('');
       setPhone('');
       setBusinessName('');
@@ -69,10 +74,10 @@ export default function CustomersPage() {
 
   // Filter customers based on search query
   const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.business_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.virtual_account?.account_number.includes(searchQuery)
+    (c.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.virtual_account?.account_number || '').includes(searchQuery)
   );
 
   return (
@@ -142,7 +147,7 @@ export default function CustomersPage() {
                   {filteredCustomers.map((cust) => (
                     <tr key={cust.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                       <td className="py-4.5 px-6 font-semibold text-slate-900">
-                        {cust.name}
+                        {cust.full_name}
                         <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{cust.business_name}</span>
                       </td>
                       <td className="py-4.5 px-6 text-slate-600">
@@ -208,8 +213,8 @@ export default function CustomersPage() {
               <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Contact Name</label>
                 <input
-                  type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Grace Foods"
+                  type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Tunde Bakare"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                 />
               </div>
@@ -218,7 +223,7 @@ export default function CustomersPage() {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
                 <input
                   type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. info@gracefoods.ng"
+                  placeholder="e.g. tunde@logistics.ng"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                 />
               </div>
@@ -236,7 +241,7 @@ export default function CustomersPage() {
                   <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Business / Legal Name</label>
                   <input
                     type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="e.g. Grace Foods Ent."
+                    placeholder="e.g. Tunde Logistics"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                   />
                 </div>

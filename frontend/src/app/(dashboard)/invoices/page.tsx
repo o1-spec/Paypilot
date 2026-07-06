@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import TopNavbar from '@/components/TopNavbar';
-import { fetchInvoices, createInvoice, fetchCustomers, Customer, Invoice, formatNaira } from '@/lib/api';
-import { FileText, Search, Plus, Calendar, AlertTriangle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { fetchInvoices, createInvoice, fetchCustomers, Customer, Invoice, formatNaira, formatDate } from '@/lib/api';
+import { FileText, Search, Plus, Calendar, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -52,11 +52,13 @@ export default function InvoicesPage() {
     setActionError(null);
     setActionSuccess(null);
     try {
+      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
       await createInvoice({
-        customer_id: customerId,
+        customer: customerId,
         amount: parseFloat(amount),
         description,
-        due_date: dueDate
+        due_date: dueDate,
+        invoice_number: invoiceNumber
       });
       setActionSuccess('Invoice issued successfully and mapped to customer profile!');
       setCustomerId('');
@@ -79,9 +81,9 @@ export default function InvoicesPage() {
 
   // Filter invoices based on search & filter tabs
   const filteredInvoices = invoices.filter(inv => {
-    const matchesSearch = inv.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          inv.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          inv.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (inv.customer_name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (inv.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (inv.invoice_number || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || inv.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -113,11 +115,11 @@ export default function InvoicesPage() {
               className="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs py-2 px-3 outline-none text-slate-700 font-medium"
             >
               <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
-              <option value="overpaid">Overpaid</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="PENDING">Pending</option>
+              <option value="PAID">Paid</option>
+              <option value="PARTIAL">Partial</option>
+              <option value="OVERPAID">Overpaid</option>
+              <option value="CANCELLED">Cancelled</option>
             </select>
             
             <button
@@ -159,9 +161,10 @@ export default function InvoicesPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-6">Invoice ID</th>
+                    <th className="py-3 px-6">Invoice Number</th>
                     <th className="py-3 px-6">Customer & Description</th>
-                    <th className="py-3 px-6">Amount Due</th>
+                    <th className="py-3 px-6">Amount</th>
+                    <th className="py-3 px-6">Amount Paid</th>
                     <th className="py-3 px-6">Due Date</th>
                     <th className="py-3 px-6">Nomba VA Destination</th>
                     <th className="py-3 px-6 text-right">Status</th>
@@ -170,23 +173,24 @@ export default function InvoicesPage() {
                 <tbody>
                   {filteredInvoices.map((inv) => (
                     <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4 px-6 font-mono font-bold text-slate-700">{inv.id}</td>
+                      <td className="py-4 px-6 font-mono font-bold text-slate-700">{inv.invoice_number}</td>
                       <td className="py-4 px-6 font-semibold text-slate-900">
                         {inv.customer_name}
                         <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{inv.description}</span>
                       </td>
                       <td className="py-4 px-6 font-bold text-slate-900">{formatNaira(inv.amount)}</td>
+                      <td className="py-4 px-6 font-semibold text-emerald-600">{formatNaira(inv.amount_paid)}</td>
                       <td className="py-4 px-6 text-slate-500 font-medium">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                          {inv.due_date}
+                          {formatDate(inv.due_date)}
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        {inv.virtual_account ? (
+                        {inv.account_number ? (
                           <div>
-                            <span className="font-mono text-slate-800 font-semibold">{inv.virtual_account.account_number}</span>
-                            <span className="block text-[9px] text-slate-400 font-medium mt-0.5">{inv.virtual_account.bank_name}</span>
+                            <span className="font-mono text-slate-800 font-semibold">{inv.account_number}</span>
+                            <span className="block text-[9px] text-slate-400 font-medium mt-0.5">{inv.bank_name}</span>
                           </div>
                         ) : (
                           <span className="text-slate-400 italic">No account linked</span>
@@ -194,10 +198,10 @@ export default function InvoicesPage() {
                       </td>
                       <td className="py-4 px-6 text-right">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                          inv.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                          inv.status === 'partial' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                          inv.status === 'overpaid' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
-                          inv.status === 'cancelled' ? 'bg-red-50 text-red-700 border border-red-200' :
+                          inv.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          inv.status === 'PARTIAL' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          inv.status === 'OVERPAID' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 animate-pulse' :
+                          inv.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border border-red-200' :
                           'bg-slate-50 text-slate-500 border border-slate-200'
                         }`}>
                           {inv.status}
@@ -241,7 +245,7 @@ export default function InvoicesPage() {
                   <option value="">-- Select Customer --</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.virtual_account?.account_number || 'No Account'})
+                      {c.full_name} ({c.virtual_account?.account_number || 'No Account'})
                     </option>
                   ))}
                 </select>

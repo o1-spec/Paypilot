@@ -9,7 +9,8 @@ import {
   DollarSign, 
   BarChart3, 
   LogOut,
-  Zap
+  Zap,
+  Send
 } from 'lucide-react';
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Payments Feed', href: '/payments', icon: DollarSign },
   { name: 'Reports & Audit', href: '/reports', icon: BarChart3 },
+  { name: 'Webhook Simulator', href: '/webhook-demo', icon: Send },
 ];
 
 export default function Sidebar() {

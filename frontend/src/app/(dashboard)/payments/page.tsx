@@ -53,13 +53,12 @@ export default function PaymentsPage() {
     setActionSuccess(null);
     try {
       const response = await triggerWebhook({
-        account_number: webhookAccount,
+        destination_account_number: webhookAccount,
         amount: parseFloat(webhookAmount),
-        bank_name: webhookBank,
         reference: webhookRef || undefined
       });
       
-      const reconciled = response.payment.status === 'reconciled';
+      const reconciled = response.status === 'MATCHED';
       if (reconciled) {
         setActionSuccess(`Webhook processed! Reconciled with customer profile.`);
       } else {
@@ -86,9 +85,9 @@ export default function PaymentsPage() {
 
   // Filter payments based on search & filter tabs
   const filteredPayments = payments.filter(pay => {
-    const matchesSearch = pay.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          pay.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          pay.account_number.includes(searchQuery);
+    const matchesSearch = (pay.customer_name || 'Unmatched').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (pay.reference || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (pay.account_number || '').includes(searchQuery);
     const matchesStatus = statusFilter === 'all' || pay.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -120,8 +119,8 @@ export default function PaymentsPage() {
               className="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs py-2 px-3 outline-none text-slate-700 font-medium"
             >
               <option value="all">All Reconciliations</option>
-              <option value="reconciled">Reconciled Only</option>
-              <option value="unmatched">Unmatched Only</option>
+              <option value="MATCHED">Reconciled Only</option>
+              <option value="UNMATCHED">Unmatched Only</option>
             </select>
             
             <button
@@ -173,32 +172,42 @@ export default function PaymentsPage() {
                 </thead>
                 <tbody>
                   {filteredPayments.map((pay) => (
-                    <tr key={pay.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <tr 
+                      key={pay.id} 
+                      className={`border-b border-slate-100 hover:bg-slate-50/50 transition-colors ${
+                        pay.status === 'UNMATCHED' ? 'bg-red-50/30 border-l-4 border-l-red-500' : ''
+                      }`}
+                    >
                       <td className="py-4 px-6 font-mono text-[10px] text-slate-500">
                         {pay.reference}
                         <span className="block text-[8px] font-normal text-slate-400 mt-0.5">{pay.id}</span>
                       </td>
                       <td className="py-4 px-6 font-semibold text-slate-900">
-                        {pay.customer_name}
-                        <span className="block text-[10px] font-normal text-slate-500 italic mt-0.5">{pay.reconciliation_detail}</span>
+                        {pay.customer_name || 'Unmatched Depositor'}
+                        <span className="block text-[10px] font-normal text-slate-500 italic mt-0.5">
+                          {pay.status === 'MATCHED' 
+                            ? `Reconciled against Invoice ${pay.invoice_number || 'N/A'}` 
+                            : `Unmatched payment from ${pay.sender_name || 'Unknown'}`
+                          }
+                        </span>
                       </td>
                       <td className="py-4 px-6 font-bold text-slate-900">{formatNaira(pay.amount)}</td>
                       <td className="py-4 px-6 font-mono text-slate-700">
-                        {pay.account_number}
-                        <span className="block text-[9px] font-sans font-medium text-slate-400 mt-0.5">VA Number</span>
+                        {pay.account_number || 'N/A'}
+                        <span className="block text-[9px] font-sans font-medium text-slate-400 mt-0.5">{pay.bank_name || 'No Bank'}</span>
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold ${
-                          pay.status === 'reconciled'
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-bold ${
+                          pay.status === 'MATCHED'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-red-50 text-red-700 border border-red-200'
+                            : 'bg-red-50 text-red-700 border border-red-200 animate-pulse'
                         }`}>
                           <CheckCircle2 className="h-3 w-3" />
-                          {pay.status === 'reconciled' ? 'Reconciled' : 'Unmatched'}
+                          {pay.status === 'MATCHED' ? 'Reconciled' : 'Unmatched'}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right text-slate-400 font-medium">
-                        {formatDate(pay.date)}
+                        {formatDate(pay.created_at)}
                       </td>
                     </tr>
                   ))}
@@ -242,7 +251,7 @@ export default function PaymentsPage() {
                     <option value="">Fill VA...</option>
                     {customers.map((c) => c.virtual_account && (
                       <option key={c.id} value={c.virtual_account.account_number}>
-                        {c.name} ({c.virtual_account.account_number})
+                        {c.full_name} ({c.virtual_account.account_number})
                       </option>
                     ))}
                   </select>

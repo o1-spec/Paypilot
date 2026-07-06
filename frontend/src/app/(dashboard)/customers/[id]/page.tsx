@@ -17,7 +17,6 @@ import {
   Send, 
   FileText, 
   DollarSign, 
-  TrendingUp, 
   Clock, 
   AlertTriangle, 
   RefreshCw,
@@ -79,9 +78,9 @@ export default function CustomerDetailPage() {
 
     try {
       await triggerWebhook({
-        account_number: report.customer.virtual_account.account_number,
+        destination_account_number: report.customer.virtual_account.account_number,
         amount: parseFloat(simAmount),
-        bank_name: report.customer.virtual_account.bank_name,
+        sender_name: report.customer.full_name,
         reference: `MOCK_TXN_CUST_${Math.floor(100000 + Math.random() * 900000)}`
       });
 
@@ -141,7 +140,7 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
-      <TopNavbar title={`${customer.name} Ledger`} />
+      <TopNavbar title={`${customer.full_name} Ledger`} />
 
       <div className="flex-1 p-8 space-y-8 max-w-7xl w-full mx-auto">
         {/* Back Link & Quick action */}
@@ -229,11 +228,11 @@ export default function CustomerDetailPage() {
               <div className="space-y-3.5 text-xs">
                 <div>
                   <span className="block text-[10px] text-slate-400 font-semibold uppercase">Legal Business Name</span>
-                  <span className="font-semibold text-slate-800 mt-0.5 block">{customer.business_name}</span>
+                  <span className="font-semibold text-slate-800 mt-0.5 block">{customer.business_name || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="block text-[10px] text-slate-400 font-semibold uppercase">Contact Name</span>
-                  <span className="font-semibold text-slate-800 mt-0.5 block">{customer.name}</span>
+                  <span className="font-semibold text-slate-800 mt-0.5 block">{customer.full_name}</span>
                 </div>
                 <div>
                   <span className="block text-[10px] text-slate-400 font-semibold uppercase">Email Address</span>
@@ -293,16 +292,16 @@ export default function CustomerDetailPage() {
                       {invoices.map((inv) => (
                         <tr key={inv.id} className="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors">
                           <td className="py-3.5 pr-4 font-semibold text-slate-800">
-                            {inv.id}
+                            {inv.invoice_number}
                             <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{inv.description}</span>
                           </td>
                           <td className="py-3.5 px-4 font-bold text-slate-900">{formatNaira(inv.amount)}</td>
-                          <td className="py-3.5 px-4 text-slate-500">{inv.due_date}</td>
+                          <td className="py-3.5 px-4 text-slate-500">{formatDate(inv.due_date)}</td>
                           <td className="py-3.5 pl-4 text-right">
                             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                              inv.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                              inv.status === 'partial' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                              inv.status === 'overpaid' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
+                              inv.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                              inv.status === 'PARTIAL' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                              inv.status === 'OVERPAID' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 animate-pulse' :
                               'bg-slate-100 text-slate-500'
                             }`}>
                               {inv.status}
@@ -330,7 +329,7 @@ export default function CustomerDetailPage() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-400 font-semibold">
-                        <th className="pb-3 pr-4">Payment ID & Ref</th>
+                        <th className="pb-3 pr-4">Reference</th>
                         <th className="pb-3 px-4">Amount</th>
                         <th className="pb-3 px-4">Reconciliation Details</th>
                         <th className="pb-3 pl-4 text-right">Date</th>
@@ -340,12 +339,17 @@ export default function CustomerDetailPage() {
                       {payments.map((pay) => (
                         <tr key={pay.id} className="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors">
                           <td className="py-3.5 pr-4 font-semibold text-slate-800">
-                            {pay.id}
-                            <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{pay.reference}</span>
+                            {pay.reference}
+                            <span className="block text-[10px] font-normal text-slate-400 mt-0.5">Sender: {pay.sender_name || 'Unknown'}</span>
                           </td>
                           <td className="py-3.5 px-4 font-bold text-slate-900">{formatNaira(pay.amount)}</td>
-                          <td className="py-3.5 px-4 text-slate-600 italic text-[11px]">{pay.reconciliation_detail}</td>
-                          <td className="py-3.5 pl-4 text-right text-slate-400">{formatDate(pay.date)}</td>
+                          <td className="py-3.5 px-4 text-slate-600 italic text-[11px]">
+                            {pay.status === 'MATCHED' 
+                              ? `Reconciled against Invoice ${pay.invoice_number || 'N/A'}` 
+                              : `Unmatched payment from ${pay.sender_name || 'Unknown'}`
+                            }
+                          </td>
+                          <td className="py-3.5 pl-4 text-right text-slate-400">{formatDate(pay.created_at)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -363,7 +367,7 @@ export default function CustomerDetailPage() {
       {isSimulateOpen && customer.virtual_account && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Transfer to {customer.name}</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Transfer to {customer.full_name}</h3>
             <p className="text-xs text-slate-400 mb-5">
               Simulates a customer sending a bank transfer to virtual account <span className="font-mono font-bold text-slate-700">{customer.virtual_account.account_number}</span>.
             </p>
@@ -373,7 +377,7 @@ export default function CustomerDetailPage() {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Transfer Amount (NGN)</label>
                 <input
                   type="number" required value={simAmount} onChange={(e) => setSimAmount(e.target.value)}
-                  placeholder="e.g. 150000"
+                  placeholder="e.g. 15000"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                 />
               </div>

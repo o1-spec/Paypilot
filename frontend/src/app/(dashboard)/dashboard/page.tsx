@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import TopNavbar from '@/components/TopNavbar';
 import { 
   fetchDashboard, 
+  fetchCustomers,
   createCustomer, 
   createInvoice, 
   triggerWebhook,
   DashboardData,
+  Customer,
   formatNaira,
   formatDate
 } from '@/lib/api';
@@ -47,7 +49,7 @@ export default function DashboardPage() {
 
   const [webhookAccount, setWebhookAccount] = useState('');
   const [webhookAmount, setWebhookAmount] = useState('');
-  const [webhookBank, setWebhookBank] = useState('');
+  const [webhookBank, setWebhookBank] = useState('Nomba Bank');
   const [webhookRef, setWebhookRef] = useState('');
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -55,7 +57,7 @@ export default function DashboardPage() {
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   // Full Customer List
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -64,11 +66,8 @@ export default function DashboardPage() {
       const dashboardData = await fetchDashboard();
       setData(dashboardData);
       
-      const res = await fetch('http://localhost:8000/api/customers/');
-      if (res.ok) {
-        const custList = await res.json();
-        setCustomers(custList);
-      }
+      const custList = await fetchCustomers();
+      setCustomers(custList);
     } catch (e: any) {
       setError(e.message || 'Failed to load dashboard statistics.');
     } finally {
@@ -86,13 +85,13 @@ export default function DashboardPage() {
     setActionError(null);
     setActionSuccess(null);
     try {
-      await createCustomer({
-        name: customerName,
+      const newCust = await createCustomer({
+        full_name: customerName,
         email: customerEmail,
         phone: customerPhone,
         business_name: customerBusiness
       });
-      setActionSuccess('Customer created successfully with a Nomba Virtual Account!');
+      setActionSuccess(`Customer ${newCust.full_name} created successfully with a Nomba Virtual Account!`);
       setCustomerName('');
       setCustomerEmail('');
       setCustomerPhone('');
@@ -117,11 +116,14 @@ export default function DashboardPage() {
     setActionError(null);
     setActionSuccess(null);
     try {
+      const matchedCust = customers.find(c => c.id === invoiceCustomerId);
+      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
       await createInvoice({
-        customer_id: invoiceCustomerId,
+        customer: invoiceCustomerId,
         amount: parseFloat(invoiceAmount),
         description: invoiceDescription,
-        due_date: invoiceDueDate
+        due_date: invoiceDueDate,
+        invoice_number: invoiceNumber
       });
       setActionSuccess('Invoice successfully generated & issued!');
       setInvoiceCustomerId('');
@@ -149,13 +151,12 @@ export default function DashboardPage() {
     setActionSuccess(null);
     try {
       const response = await triggerWebhook({
-        account_number: webhookAccount,
+        destination_account_number: webhookAccount,
         amount: parseFloat(webhookAmount),
-        bank_name: webhookBank || 'Nomba Bank',
         reference: webhookRef || undefined
       });
       
-      const reconciled = response.payment.status === 'reconciled';
+      const reconciled = response.status === 'MATCHED';
       if (reconciled) {
         setActionSuccess(`Reconciliation Successful! Matched customer and processed payment.`);
       } else {
@@ -164,7 +165,7 @@ export default function DashboardPage() {
       
       setWebhookAccount('');
       setWebhookAmount('');
-      setWebhookBank('');
+      setWebhookBank('Nomba Bank');
       setWebhookRef('');
       
       await loadData();
@@ -295,31 +296,26 @@ export default function DashboardPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">Invoices Issued</span>
+              <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">Active Customers</span>
               <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600 border border-indigo-100">
-                <FileCheck2 className="h-5 w-5" />
+                <Users className="h-5 w-5" />
               </div>
             </div>
             <div className="mt-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900 tracking-tight">{(data?.pending_invoices || 0) + (data?.paid_invoices || 0)}</span>
-                <span className="text-xs font-medium text-slate-500">total</span>
-              </div>
-              <span className="block text-[10px] text-slate-400 font-medium mt-1">
-                <span className="text-emerald-600 font-semibold">{data?.paid_invoices} paid</span> &bull; <span className="text-amber-600 font-semibold">{data?.pending_invoices} pending</span>
-              </span>
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{data?.active_customers || 0}</span>
+              <span className="block text-[10px] text-slate-400 font-medium mt-1">Customers with active virtual accounts</span>
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">Unmatched Transfers</span>
-              <div className={`rounded-lg p-2 border ${data?.unmatched_payments && data.unmatched_payments > 0 ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+              <div className={`rounded-lg p-2 border ${data?.unmatched_transfers && data.unmatched_transfers > 0 ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
                 <AlertTriangle className="h-5 w-5" />
               </div>
             </div>
             <div className="mt-4">
-              <span className="text-2xl font-bold text-slate-900 tracking-tight">{data?.unmatched_payments || 0}</span>
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{data?.unmatched_transfers || 0}</span>
               <span className="block text-[10px] text-slate-400 font-medium mt-1">Transfers requiring manual mapping</span>
             </div>
           </div>
@@ -351,21 +347,21 @@ export default function DashboardPage() {
                     {data.recent_payments.map((pay) => (
                       <tr key={pay.id} className="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors">
                         <td className="py-3.5 pr-4 font-semibold text-slate-800">
-                          {pay.customer_name}
-                          <span className="block text-[10px] font-normal text-slate-400 mt-0.5">VA: {pay.account_number}</span>
+                          {pay.customer_name || 'Unmatched Depositor'}
+                          <span className="block text-[10px] font-normal text-slate-400 mt-0.5">VA: {pay.account_number || 'N/A'}</span>
                         </td>
                         <td className="py-3.5 px-4 font-bold text-slate-900">{formatNaira(pay.amount)}</td>
                         <td className="py-3.5 px-4">
                           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                            pay.status === 'reconciled'
+                            pay.status === 'MATCHED'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-red-50 text-red-700 border border-red-200 animate-pulse'
                           }`}>
-                            {pay.status === 'reconciled' ? 'Reconciled' : 'Unmatched'}
+                            {pay.status === 'MATCHED' ? 'Reconciled' : 'Unmatched'}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 font-mono text-[10px] text-slate-500">{pay.reference}</td>
-                        <td className="py-3.5 pl-4 text-right text-slate-400">{formatDate(pay.date)}</td>
+                        <td className="py-3.5 pl-4 text-right text-slate-400">{formatDate(pay.created_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -386,28 +382,25 @@ export default function DashboardPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
             <div className="space-y-4">
-              <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">Pilot Virtual Accounts Engine</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                PayPilot automatically provisions unique virtual bank account numbers for your client directory. Customers transfer funds to their virtual account using standard bank apps.
-              </p>
+              <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">Merchant Alerts Stream</h3>
               
-              <div className="rounded-xl bg-slate-900 p-4 border border-slate-800 text-slate-200 space-y-3 text-xs">
-                <div className="flex items-center gap-2 border-b border-slate-800 pb-2 font-bold text-[10px] tracking-wider text-indigo-400 uppercase">
-                  <Send className="h-4 w-4" />
-                  API Webhook Trigger Payload
+              {data?.recent_notifications && data.recent_notifications.length > 0 ? (
+                <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
+                  {data.recent_notifications.map((notif) => (
+                    <div key={notif.id} className="p-3 bg-slate-50 rounded-xl border border-slate-150 space-y-1 text-xs">
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-slate-800">{notif.title}</span>
+                        <span className="text-[9px] text-slate-400">{formatDate(notif.created_at)}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-normal">{notif.message}</p>
+                    </div>
+                  ))}
                 </div>
-                <pre className="text-[10px] font-mono text-slate-400 overflow-x-auto">
-{`{
-  "event": "payment.received",
-  "data": {
-    "account_number": "1023456789",
-    "amount": 150000.0,
-    "bank_name": "Nomba Bank",
-    "reference": "TXN_12345_ABCD"
-  }
-}`}
-                </pre>
-              </div>
+              ) : (
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  PayPilot automatically alerts you when customer virtual accounts receive payments. All matched and unmatched events are listed here.
+                </p>
+              )}
             </div>
 
             <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4 text-xs mt-6">
@@ -432,7 +425,7 @@ export default function DashboardPage() {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Contact Name</label>
                 <input
                   type="text" required value={customerName} onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="e.g. Grace Foods"
+                  placeholder="e.g. Tunde Bakare"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                 />
               </div>
@@ -441,7 +434,7 @@ export default function DashboardPage() {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
                 <input
                   type="email" required value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="e.g. info@gracefoods.ng"
+                  placeholder="e.g. tunde@logistics.ng"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                 />
               </div>
@@ -459,7 +452,7 @@ export default function DashboardPage() {
                   <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Business / Legal Name</label>
                   <input
                     type="text" value={customerBusiness} onChange={(e) => setCustomerBusiness(e.target.value)}
-                    placeholder="e.g. Grace Foods Ent."
+                    placeholder="e.g. Tunde Logistics"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
                   />
                 </div>
@@ -508,7 +501,7 @@ export default function DashboardPage() {
                   <option value="">-- Select Customer --</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.virtual_account?.account_number || 'No Account'})
+                      {c.full_name} ({c.virtual_account?.account_number || 'No Account'})
                     </option>
                   ))}
                 </select>
@@ -588,7 +581,7 @@ export default function DashboardPage() {
                     <option value="">Fill VA...</option>
                     {customers.map((c) => c.virtual_account && (
                       <option key={c.id} value={c.virtual_account.account_number}>
-                        {c.name} ({c.virtual_account.account_number})
+                        {c.full_name} ({c.virtual_account.account_number})
                       </option>
                     ))}
                   </select>
