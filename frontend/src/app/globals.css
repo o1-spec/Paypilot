@@ -33,7 +33,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* ── Selection ────────────────────────────────────────────────── */
-::selection { background-color: #0F766E; color: #ffffff; }
+::selection { background-color: #4F46E5; color: #ffffff; }
 
 /* ══════════════════════════════════════════════════════════════
    KEYFRAME ANIMATIONS
@@ -160,7 +160,7 @@ body {
   left: 0;
   height: 2px;
   width: 0;
-  background: #0F766E;
+  background: #4F46E5;
   border-radius: 9999px;
   transition: width 0.25s ease;
 }
