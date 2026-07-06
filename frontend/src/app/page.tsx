@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginMerchant, registerMerchant } from '@/lib/api';
-import { 
-  Zap, 
-  CreditCard, 
-  ShieldCheck, 
-  RefreshCw, 
-  BarChart4, 
+import {
+  Zap,
+  CreditCard,
+  ShieldCheck,
+  RefreshCw,
+  BarChart4,
   ArrowRight,
   Sparkles,
   CheckCircle2,
@@ -27,7 +27,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  
+
   // FAQ state
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
@@ -131,9 +131,9 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col justify-between overflow-x-hidden selection:bg-teal-650 selection:text-white font-sans">
-      
+
       {/* HEADER NAVBAR */}
-      <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-20 relative">
+      <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-20">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0F766E] shadow-sm">
@@ -198,7 +198,7 @@ export default function LandingPage() {
       <section className="container mx-auto px-6 pb-24 z-10 relative">
         <div className="w-full max-w-5xl mx-auto rounded-3xl border border-[#E2E8F0] bg-white p-3 shadow-md">
           <div className="rounded-2xl border border-[#F1F5F9] bg-[#F8FAFC] p-6 space-y-6">
-            
+
             {/* Toolbar */}
             <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
               <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export default function LandingPage() {
               <div className="bg-white border border-[#E2E8F0] rounded-xl p-4.5 space-y-1">
                 <span className="block text-[8px] font-bold text-[#64748B] uppercase tracking-wider">Reconciled Collections</span>
                 <span className="block text-lg font-bold text-[#0F172A]">₦2,850,000.00</span>
-                <span className="block text-[9px] text-[#047857] font-semibold flex items-center gap-1">
+                <span className="text-[9px] text-[#047857] font-semibold flex items-center gap-1">
                   <span className="h-1 w-1 bg-emerald-500 rounded-full" /> Auto-matched via webhook
                 </span>
               </div>

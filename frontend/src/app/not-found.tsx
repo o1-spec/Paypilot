@@ -25,7 +25,7 @@ export default function NotFound() {
       </header>
 
       {/* Main 404 Block */}
-      <main className="container mx-auto px-6 py-20 flex flex-col items-center justify-center text-center z-10 flex-grow max-w-md space-y-6 animate-in fade-in duration-300">
+      <main className="container mx-auto px-6 py-20 flex flex-col items-center justify-center text-center z-10 grow max-w-md space-y-6 animate-in fade-in duration-300">
         <div className="h-16 w-16 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-center text-indigo-400 shadow-inner">
           <HelpCircle className="h-8 w-8" />
         </div>

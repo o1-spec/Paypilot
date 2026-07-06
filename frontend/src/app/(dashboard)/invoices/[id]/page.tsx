@@ -7,14 +7,14 @@ import Table from '@/components/Table';
 import StatusBadge from '@/components/StatusBadge';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { 
-  ArrowLeft, 
-  Building2, 
-  CreditCard, 
-  FileText, 
-  DollarSign, 
-  Clock, 
-  AlertTriangle, 
+import {
+  ArrowLeft,
+  Building2,
+  CreditCard,
+  FileText,
+  DollarSign,
+  Clock,
+  AlertTriangle,
   RefreshCw,
   Copy,
   Check,
@@ -27,13 +27,13 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
-import { 
-  fetchInvoice, 
-  cancelInvoice, 
+import {
+  fetchInvoice,
+  cancelInvoice,
   fetchPayments,
   Invoice,
   Payment,
-  formatNaira, 
+  formatNaira,
   formatDate
 } from '@/lib/api';
 
@@ -170,7 +170,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
       <TopNavbar title="Invoice Details" />
 
       <main className="flex-1 p-8 max-w-7xl w-full mx-auto space-y-8 animate-in fade-in duration-200">
-        
+
         {/* Back Link & Page Actions */}
         <div className="flex items-center justify-between">
           <Link
@@ -180,7 +180,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
             <ArrowLeft className="h-4 w-4" />
             Back to Invoices Ledger
           </Link>
-          
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => typeof window !== 'undefined' && window.print()}
@@ -211,13 +211,13 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
 
         {/* Invoice Split layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* LEFT SIDE: Invoice items & Payments Feed (col span 8) */}
           <div className="lg:col-span-8 space-y-6">
-            
+
             {/* Stripe Invoice Core Frame */}
             <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-8">
-              
+
               {/* Stripe Header: Logo and Invoice details */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-slate-100 pb-6">
                 <div className="space-y-1">
@@ -278,14 +278,14 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
 
           {/* RIGHT SIDE: Customer and Nomba Virtual Account sidebar (col span 4) */}
           <div className="lg:col-span-4 space-y-6">
-            
+
             {/* 1. Customer Information Card */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-5">
               <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center gap-2">
                 <Building2 className="h-4.5 w-4.5 text-indigo-500" />
                 Customer Recipient
               </h3>
-              
+
               <div className="space-y-3.5">
                 <div>
                   <h4 className="font-extrabold text-sm text-slate-900 tracking-tight leading-none">
@@ -326,7 +326,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                     >
                       {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                     </button>
-                    
+
                     <span className="block text-[9px] font-bold text-slate-450 uppercase tracking-wider">Destination Account</span>
                     <span className="block font-mono font-bold text-sm text-slate-850 select-all tracking-wide">{invoice.account_number}</span>
                     <div className="pt-2 border-t border-slate-150/50 flex justify-between text-[10px] font-semibold text-slate-500">
@@ -364,9 +364,8 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                 {/* 2. Paid / Partial status */}
                 {invoice.amount_paid > 0 && (
                   <div className="relative text-xs space-y-1">
-                    <div className={`absolute -left-6 top-1 h-4.5 w-4.5 rounded-full border-4 border-white shadow-sm ${
-                      invoice.status === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'
-                    }`} />
+                    <div className={`absolute -left-6 top-1 h-4.5 w-4.5 rounded-full border-4 border-white shadow-sm ${invoice.status === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`} />
                     <span className="block font-bold text-slate-800">
                       {invoice.status === 'PAID' ? 'Payment Fully Cleared' : 'Partial Payment Cleared'}
                     </span>
@@ -379,7 +378,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                   <div className="relative text-xs space-y-1">
                     <div className="absolute -left-6 top-1 h-4.5 w-4.5 rounded-full border-4 border-white bg-slate-350 shadow-sm" />
                     <span className="block font-bold text-slate-800">Due Date deadline</span>
-                    <span className="block text-[10px] text-slate-450 font-semibold flex items-center gap-1">
+                    <span className="text-[10px] text-slate-450 font-semibold flex items-center gap-1">
                       <Calendar className="h-3 w-3 text-slate-400" />
                       {invoice.due_date}
                     </span>
