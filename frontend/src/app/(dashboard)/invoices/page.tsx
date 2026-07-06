@@ -40,6 +40,7 @@ export default function InvoicesPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -180,7 +181,7 @@ export default function InvoicesPage() {
           </Link>
           {inv.status !== 'PAID' && inv.status !== 'CANCELLED' && (
             <button
-              onClick={() => handleCancelInvoice(inv.id)}
+              onClick={() => setCancellingInvoice(inv)}
               className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 hover:text-rose-500 bg-rose-50 hover:bg-rose-100/50 rounded-lg px-2.5 py-1.5 border border-rose-150 transition-colors"
             >
               <AlertOctagon className="h-3.5 w-3.5" />
@@ -360,6 +361,37 @@ export default function InvoicesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CANCEL INVOICE CONFIRMATION MODAL */}
+      {cancellingInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <h3 className="text-sm font-extrabold text-slate-900 mb-1.5">Cancel Invoice Billing</h3>
+            <p className="text-xs text-slate-500 mb-5 leading-normal">
+              Are you sure you want to cancel invoice <strong className="font-mono text-slate-800">{cancellingInvoice.invoice_number}</strong>? Reconciling payments won't apply to cancelled schedules.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setCancellingInvoice(null)}
+                className="rounded-xl border border-slate-200 text-xs font-semibold px-4.5 py-2 hover:bg-slate-50 text-slate-600 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleCancelInvoice(cancellingInvoice.id);
+                  setCancellingInvoice(null);
+                }}
+                className="rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white px-5 py-2.5 shadow-md shadow-rose-600/10"
+              >
+                Confirm Cancellation
+              </button>
+            </div>
           </div>
         </div>
       )}

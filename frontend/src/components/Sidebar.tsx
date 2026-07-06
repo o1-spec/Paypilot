@@ -30,6 +30,7 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('paypilot_demo_session');
@@ -93,7 +94,7 @@ export default function Sidebar() {
           </div>
         </div>
         <button
-          onClick={handleLogout}
+          onClick={() => setIsLogoutConfirmOpen(true)}
           className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-slate-250 bg-white hover:bg-red-50 text-xs font-bold text-slate-600 hover:text-red-600 py-2.5 shadow-sm transition-all duration-150"
         >
           <LogOut className="h-4 w-4" />
@@ -131,6 +132,36 @@ export default function Sidebar() {
             {navContent}
           </aside>
         </>
+      )}
+      {/* LOGOUT CONFIRMATION MODAL */}
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-155">
+            <h3 className="text-sm font-extrabold text-slate-900 mb-1.5">Sign Out Sandbox</h3>
+            <p className="text-xs text-slate-500 mb-5 leading-normal">
+              Are you sure you want to end your Developer Sandbox session? You will be redirected back to the login landing page.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsLogoutConfirmOpen(false)}
+                className="rounded-xl border border-slate-200 text-xs font-semibold px-4.5 py-2 hover:bg-slate-50 text-slate-600 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogoutConfirmOpen(false);
+                  handleLogout();
+                }}
+                className="rounded-xl bg-slate-950 hover:bg-slate-900 text-xs font-bold text-white px-5 py-2.5 shadow-md"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

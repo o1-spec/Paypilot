@@ -55,7 +55,7 @@ export default function TopNavbar({ title }: { title: string }) {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white lg:px-8 pl-16 pr-8">
       {/* Page Title */}
       <h1 className="text-base font-bold text-slate-900 tracking-tight hidden sm:block">{title}</h1>
 
@@ -85,8 +85,10 @@ export default function TopNavbar({ title }: { title: string }) {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 font-bold text-indigo-600 shadow-sm border border-indigo-100">
               {merchantName.substring(0, 2).toUpperCase()}
             </div>
-            <div className="hidden lg:block text-left">
-              <span className="block text-xs font-semibold text-slate-800 tracking-tight leading-tight">{merchantName}</span>
+            <div className="hidden lg:block text-left shrink-0 whitespace-nowrap">
+              <span className="block text-xs font-semibold text-slate-800 tracking-tight leading-tight max-w-[140px] truncate" title={merchantName}>
+                {merchantName}
+              </span>
               <span className="block text-[10px] text-slate-400 font-semibold mt-0.5 tracking-wide">Developer Sandbox</span>
             </div>
           </div>

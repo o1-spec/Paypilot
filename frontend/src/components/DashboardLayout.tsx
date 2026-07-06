@@ -17,7 +17,7 @@ export default function DashboardLayout({
       <Sidebar />
 
       {/* Main content frame */}
-      <div className="pl-64 flex-1 flex flex-col min-h-screen">
+      <div className="lg:pl-64 pl-0 flex-1 flex flex-col min-h-screen">
         {/* Sticky top navigation */}
         <TopNavbar title={title} />
         

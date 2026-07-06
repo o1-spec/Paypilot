@@ -47,6 +47,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
   // Action status indicators
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -190,7 +191,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
             </button>
             {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
               <button
-                onClick={handleCancel}
+                onClick={() => setIsCancelConfirmOpen(true)}
                 disabled={actionLoading}
                 className="inline-flex items-center gap-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-600 py-2.5 px-4 shadow-sm border border-rose-150 transition-all disabled:opacity-50"
               >
@@ -401,6 +402,37 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
         </div>
 
       </main>
+
+      {/* CANCEL INVOICE CONFIRMATION MODAL */}
+      {isCancelConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <h3 className="text-sm font-extrabold text-slate-900 mb-1.5">Cancel Invoice Billing</h3>
+            <p className="text-xs text-slate-500 mb-5 leading-normal">
+              Are you sure you want to cancel invoice <strong className="font-mono text-slate-800">{invoice.invoice_number}</strong>? Reconciling payments won't apply to cancelled schedules.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsCancelConfirmOpen(false)}
+                className="rounded-xl border border-slate-200 text-xs font-semibold px-4.5 py-2 hover:bg-slate-50 text-slate-600 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCancelConfirmOpen(false);
+                  handleCancel();
+                }}
+                className="rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white px-5 py-2.5 shadow-md shadow-rose-600/10"
+              >
+                Confirm Cancellation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
