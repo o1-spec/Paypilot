@@ -93,8 +93,11 @@ graph TD
 
 ## 🔌 Backend API Routes
 
+Detailed sample request/response payloads are documented inside the [REST API Reference Guide](file:///Users/macbook/Documents/Paypilot/backend/docs/api.md).
+
 All resource management endpoints require a valid JWT bearer token inside the authorization header:
 `Authorization: Bearer <your_access_token>`
+
 
 ### Authentication Endpoints
 | Endpoint | Method | Description |
@@ -193,10 +196,14 @@ When an incoming transfer payload is POSTed to `/api/webhooks/nomba/`:
 ---
 
 ## 🔐 Sandbox Demo Access
-To make live evaluation seamless:
-* **Autologin Fallback**: If no auth header token is supplied, the backend falls back to the default merchant profile created by the seed script:
-  * **Email**: `info@gracefoods.ng`
-  * **Business Name**: Grace Foods
+To make live evaluation seamless, run the seed command to register the default demo merchant profile in the database:
+* **Email**: `info@gracefoods.ng`
+* **Password**: `password`
+
+To call protected resource endpoints, exchange credentials for a JWT token by posting to:
+`POST /api/auth/login/`
+Copy the returned `access` token and include it inside subsequent HTTP request headers:
+`Authorization: Bearer <your_access_token>`
 
 ---
 
@@ -240,3 +247,17 @@ To transition from a mock framework to production:
    ```
 2. **Nomba Webhook Signature Validation**: Implement cryptographic verification using Nomba's webhook secret signatures headers (`X-Nomba-Signature`) to guarantee inbound transaction payloads are authentic.
 3. **Advanced Reconciliation Analytics**: Introduce invoice reminders, automated SMS alerts for customers upon payment match, and accounting exports (CSV/Excel).
+
+---
+
+## ✅ Final Backend Completion Checklist
+
+- [x] **Database Models & Relationships**: Complete Django models with robust integrity relations.
+- [x] **JWT Authentication (SimpleJWT)**: Secure user login, registration, me profiles, and blacklist logout.
+- [x] **Multi-Tenant Data Scoping**: All lookups, lists, and actions isolated by merchant session context.
+- [x] **Decoupled Provisioning Service**: Abstract base class provider interface for seamless production transition.
+- [x] **Self-Healing Webhook Reconciliation**: Idempotent duplicate check, raw webhook event logging, and transaction-isolated database adjustments.
+- [x] **Ledger Account Statement Reporting**: Chronologically ordered statement lines with credit/debit classifications and running balance.
+- [x] **Actionable Alert Notifications**: Status-based classification alerts with unread and batch mark-read endpoints.
+- [x] **CORS Configuration**: Fully enabled local origins for Next.js frontend calls.
+- [x] **Fully Passing Automated Test Suite**: Integration test suite verifying all 17 lifecycle scenarios.

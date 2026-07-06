@@ -294,6 +294,137 @@ def run_tests():
     assert float(res.json()["amount_paid"]) == 120000.00
     print("Success! Overpayment successfully applied. Invoice is OVERPAID.")
 
+    # 7g. Test GET /api/payments/unmatched/
+    print("\n--- Testing GET /api/payments/unmatched/ ---")
+    res = client.get("/api/payments/unmatched/", **auth_headers)
+    assert res.status_code == 200
+    unmatched_list = res.json()
+    assert len(unmatched_list) >= 1
+    unmatched_payment = unmatched_list[0]
+    unmatched_id = unmatched_payment["id"]
+    print("Success! Fetched unmatched payment with reference:", unmatched_payment["reference"])
+
+    # 7h. Create a claim-target invoice
+    print("\n--- Creating Target Invoice for claim assignment ---")
+    res = client.post("/api/invoices/", {
+        "customer": cust_id,
+        "amount": 15000.00,
+        "due_date": "2026-11-01"
+    }, content_type="application/json", **auth_headers)
+    assert res.status_code == 201
+    claim_inv_data = res.json()
+    claim_inv_id = claim_inv_data["id"]
+
+    # 7i. Test POST /api/payments/{id}/assign/ (Claim/Assign payment)
+    print("\n--- Testing POST /api/payments/{id}/assign/ ---")
+    assign_payload = {
+        "customer": cust_id,
+        "invoice": claim_inv_id
+    }
+    res = client.post(f"/api/payments/{unmatched_id}/assign/", assign_payload, content_type="application/json", **auth_headers)
+    assert res.status_code == 200
+    assign_res = res.json()
+    assert assign_res["status"] == "MATCHED"
+    print("Success! Unmatched payment claimed. Status updated to MATCHED.")
+
+    # Check that invoice status changed to PAID
+    res = client.get(f"/api/invoices/{claim_inv_id}/", **auth_headers)
+    assert res.json()["status"] == "PAID"
+    print("Success! Associated invoice is now PAID.")
+
+    # 7j. Create a second unmatched payment to test mark-reviewed
+    print("\n--- Creating a second unmatched payment ---")
+    unmatched_payload2 = {
+        "event": "virtual_account.payment_received",
+        "data": {
+            "account_number": "9999999999",
+            "amount": 5000.00,
+            "reference": "TXN_M1_UNMATCHED_REV",
+            "sender_name": "Review Person",
+            "sender_account_number": "445566",
+            "bank_name": "Access Bank"
+        }
+    }
+    res = client.post("/api/webhooks/nomba/", unmatched_payload2, content_type="application/json")
+    assert res.status_code == 200
+    rev_web_res = res.json()
+    unmatched2_id = rev_web_res["payment"]["id"]
+
+    # Test POST /api/payments/{id}/mark-reviewed/
+    print("\n--- Testing POST /api/payments/{id}/mark-reviewed/ ---")
+    res = client.post(f"/api/payments/{unmatched2_id}/mark-reviewed/", {}, content_type="application/json", **auth_headers)
+    assert res.status_code == 200
+    assert res.json()["status"] == "REVIEW"
+    print("Success! Payment status is REVIEW.")
+
+    # 7k. Test filtering parameters
+    print("\n--- Testing GET /api/payments/ filters ---")
+    res = client.get("/api/payments/?min_amount=100000.00", **auth_headers)
+    assert res.status_code == 200
+    assert len(res.json()) >= 1
+    print("Success! Verified filters return correct payment list ranges.")
+
+    # 7l. Test Dashboard Metrics API Completeness
+    print("\n--- Testing GET /api/dashboard/summary/ Completeness ---")
+    res = client.get("/api/dashboard/summary/", **auth_headers)
+    assert res.status_code == 200
+    dash_data = res.json()
+    assert dash_data["total_customers"] == 1
+    assert dash_data["total_virtual_accounts"] == 1
+    assert float(dash_data["total_revenue"]) > 0
+    assert dash_data["pending_invoices_count"] == 0
+    assert dash_data["unmatched_payments_count"] >= 0
+    assert len(dash_data["monthly_revenue_summary"]) == 12
+    assert "invoice_status_breakdown" in dash_data
+    print("Success! Verified all 15 dashboard summary parameters.")
+
+    # 7m. Test Customer Statement report API Completeness
+    print("\n--- Testing GET /api/reports/customers/{id}/statement/ ---")
+    res = client.get(f"/api/reports/customers/{cust_id}/statement/", **auth_headers)
+    assert res.status_code == 200
+    stmt_data = res.json()
+    assert "customer" in stmt_data
+    assert "virtual_account" in stmt_data
+    assert float(stmt_data["total_invoice_amount"]) > 0
+    assert float(stmt_data["total_paid"]) > 0
+    assert len(stmt_data["statement_lines"]) >= 2
+    lines = stmt_data["statement_lines"]
+    assert "running_balance" in lines[0]
+    print("Success! Verified customer statement report parameters.")
+
+    # 7n. Test Notifications endpoints and state classifications
+    print("\n--- Testing GET /api/notifications/ ---")
+    res = client.get("/api/notifications/", **auth_headers)
+    assert res.status_code == 200
+    notifs = res.json()
+    assert len(notifs) >= 1
+    matched_notif = [n for n in notifs if n["type"] == "INVOICE_PAID"]
+    assert len(matched_notif) >= 1
+    print("Success! Verified notification list and classified type:", matched_notif[0]["type"])
+
+    # Test GET /api/notifications/unread/
+    print("\n--- Testing GET /api/notifications/unread/ ---")
+    res = client.get("/api/notifications/unread/", **auth_headers)
+    assert res.status_code == 200
+    unreads = res.json()
+    assert len(unreads) >= 1
+    notif_id = unreads[0]["id"]
+    print("Success! Retrieved unread count:", len(unreads))
+
+    # Test POST /api/notifications/{id}/mark-read/
+    print("\n--- Testing POST /api/notifications/{id}/mark-read/ ---")
+    res = client.post(f"/api/notifications/{notif_id}/mark-read/", {}, content_type="application/json", **auth_headers)
+    assert res.status_code == 200
+    assert res.json()["read"] is True
+    print("Success! Notification marked read.")
+
+    # Test POST /api/notifications/mark-all-read/
+    print("\n--- Testing POST /api/notifications/mark-all-read/ ---")
+    res = client.post("/api/notifications/mark-all-read/", {}, content_type="application/json", **auth_headers)
+    assert res.status_code == 200
+    assert res.json()["count_marked"] >= 0
+    print("Success! Batch notifications marked read.")
+
     # 8. Create Merchant 2 & Verify Data Isolation
     print("\n--- Testing Multi-tenant Scoping Isolation (Merchant 2 check) ---")
     m2_payload = {

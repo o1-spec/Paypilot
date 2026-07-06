@@ -46,26 +46,67 @@ class CustomerStatementView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
+        from decimal import Decimal
+        from virtual_accounts.serializers import VirtualAccountSerializer
+
         customer = get_object_or_404(Customer, pk=pk)
         
         # Verify customer matches active authenticated merchant
         if customer.merchant != request.user:
             return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        invoices = Invoice.objects.filter(customer=customer).order_by('-created_at')
-        payments = Payment.objects.filter(customer=customer).order_by('-created_at')
+        # Retrieve invoices and payments chronologically
+        invoices = Invoice.objects.filter(customer=customer).order_by('created_at')
+        payments = Payment.objects.filter(customer=customer).order_by('created_at')
 
-        total_invoiced = sum(inv.amount for inv in invoices)
-        total_paid = sum(pay.amount for pay in payments)
-        outstanding_balance = total_invoiced - total_paid
+        # Combine into statement lines
+        lines = []
+        for inv in invoices:
+            lines.append({
+                "date": inv.created_at.strftime("%Y-%m-%d"),
+                "created_at": inv.created_at,
+                "type": "INVOICE",
+                "description": inv.description or f"Invoice {inv.invoice_number} issued",
+                "debit": inv.amount,
+                "credit": Decimal('0.00'),
+                "reference": inv.invoice_number
+            })
+
+        for p in payments:
+            lines.append({
+                "date": p.created_at.strftime("%Y-%m-%d"),
+                "created_at": p.created_at,
+                "type": "PAYMENT",
+                "description": f"Payment received from {p.sender_name or 'customer'}",
+                "debit": Decimal('0.00'),
+                "credit": p.amount,
+                "reference": p.reference
+            })
+
+        # Sort combined list by created_at date
+        lines.sort(key=lambda x: x["created_at"])
+
+        # Calculate running balances
+        running_balance = Decimal('0.00')
+        for line in lines:
+            running_balance = running_balance + line["debit"] - line["credit"]
+            line["running_balance"] = running_balance
+            del line["created_at"]
+
+        total_invoice_amount = sum(inv.amount for inv in invoices)
+        total_paid = sum(p.amount for p in payments)
+        outstanding_balance = total_invoice_amount - total_paid
+
+        virtual_acc = getattr(customer, 'virtual_account', None)
+        virtual_acc_data = VirtualAccountSerializer(virtual_acc).data if virtual_acc else None
 
         return Response({
             "customer": CustomerSerializer(customer).data,
-            "summary": {
-                "total_invoiced": total_invoiced,
-                "total_paid": total_paid,
-                "outstanding_balance": outstanding_balance,
-            },
+            "virtual_account": virtual_acc_data,
+            "total_invoice_amount": total_invoice_amount,
+            "total_paid": total_paid,
+            "outstanding_balance": outstanding_balance,
             "invoices": InvoiceSerializer(invoices, many=True).data,
             "payments": PaymentSerializer(payments, many=True).data,
-        })
+            "statement_lines": lines
+        }, status=status.HTTP_200_OK)

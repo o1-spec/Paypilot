@@ -95,7 +95,7 @@ class ReconciliationService:
                     merchant=default_merchant,
                     title="Unmatched Payment Received",
                     message=f"An incoming payment of NGN {amount:,.2f} to account {account_number} could not be matched to any customer.",
-                    type='payment_unmatched'
+                    type='UNMATCHED_PAYMENT'
                 )
 
                 # mark event as processed
@@ -150,11 +150,20 @@ class ReconciliationService:
             )
 
             # 9. Create notification
+            notification_type = 'PAYMENT_RECEIVED'
+            if reconciled_invoice:
+                if reconciled_invoice.status == 'PAID':
+                    notification_type = 'INVOICE_PAID'
+                elif reconciled_invoice.status == 'PARTIAL':
+                    notification_type = 'PARTIAL_PAYMENT'
+                elif reconciled_invoice.status == 'OVERPAID':
+                    notification_type = 'OVERPAYMENT'
+
             Notification.objects.create(
                 merchant=merchant,
                 title="Payment Received & Reconciled" if reconciled_invoice else "Unapplied Payment Mapped",
                 message=f"Received NGN {amount:,.2f} from {sender_name} for customer {customer.full_name}. {message}",
-                type='payment_reconciled' if reconciled_invoice else 'payment_received'
+                type=notification_type
             )
 
             # 10. Mark webhook event as processed

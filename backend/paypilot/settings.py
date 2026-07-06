@@ -125,6 +125,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS Configurations
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 # Django REST Framework Settings
 REST_FRAMEWORK = {

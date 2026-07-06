@@ -1,32 +1,43 @@
-from rest_framework import generics
-from django.contrib.auth import get_user_model
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from .models import Notification
 from .serializers import NotificationSerializer
 
-Merchant = get_user_model()
-
-class NotificationListCreateView(generics.ListCreateAPIView):
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Notification.objects.all().order_by('-created_at')
     serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if not user.is_authenticated:
-            default_merchant = Merchant.objects.first()
-            if default_merchant:
-                return self.queryset.filter(merchant=default_merchant)
-            return self.queryset.none()
-        return self.queryset.filter(merchant=user)
+        # Scope notifications strictly to the authenticated merchant
+        return self.queryset.filter(merchant=self.request.user)
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        if not user.is_authenticated:
-            user = Merchant.objects.first()
-            if not user:
-                user = Merchant.objects.create_user(
-                    username='demo_merchant',
-                    email='info@gracefoods.ng',
-                    password='password',
-                    business_name='Grace Foods Enterprises'
-                )
-        serializer.save(merchant=user)
+    @action(detail=False, methods=['get'], url_path='unread')
+    def unread(self, request):
+        queryset = self.get_queryset().filter(read=False)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='mark-read')
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        notification.read = True
+        notification.save()
+        serializer = self.get_serializer(notification)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='mark-all-read')
+    def mark_all_read(self, request):
+        queryset = self.get_queryset().filter(read=False)
+        count = queryset.update(read=True)
+        return Response({
+            "message": "All notifications marked as read.",
+            "count_marked": count
+        }, status=status.HTTP_200_OK)

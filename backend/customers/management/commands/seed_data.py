@@ -150,13 +150,13 @@ class Command(BaseCommand):
             merchant=merchant,
             title="System Active",
             message="PayPilot Dedicated Virtual Account reconciliation engine initialized.",
-            type="info"
+            type="SYSTEM"
         )
         Notification.objects.create(
             merchant=merchant,
             title="Unmatched Payment Warning",
             message="An inbound transfer of NGN 18,500.00 from Musa Ibrahim could not be matched. Please review unmatched logs.",
-            type="warning"
+            type="UNMATCHED_PAYMENT"
         )
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded all sample demo records!'))
