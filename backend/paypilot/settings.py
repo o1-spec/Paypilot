@@ -153,3 +153,17 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# 🏦 Nomba API Integration Settings
+NOMBA_CLIENT_ID = os.environ.get('NOMBA_CLIENT_ID', '')
+NOMBA_CLIENT_SECRET = os.environ.get('NOMBA_CLIENT_SECRET', '')
+NOMBA_ACCOUNT_ID = os.environ.get('NOMBA_ACCOUNT_ID', '')
+NOMBA_ENV = os.environ.get('NOMBA_ENV', 'sandbox')  # 'sandbox' or 'production'
+NOMBA_WEBHOOK_SIGNING_KEY = os.environ.get('NOMBA_WEBHOOK_SIGNING_KEY', '')
+
+# Provider Configuration
+VIRTUAL_ACCOUNT_PROVIDER = os.environ.get(
+    'VIRTUAL_ACCOUNT_PROVIDER',
+    'virtual_accounts.providers.NombaProvider'
+)
+

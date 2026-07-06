@@ -67,14 +67,18 @@ python manage.py runserver
 
 Backend runs at: `http://localhost:8000`
 
-**Environment variables** — copy `.env.example` to `.env`:
+**Environment variables** — copy `backend/.env.example` to `backend/.env`:
 ```env
 SECRET_KEY=your-django-secret-key
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
-NOMBA_API_KEY=your-nomba-api-key        # optional for sandbox
-NOMBA_ACCOUNT_ID=your-account-id        # optional for sandbox
+USE_SQLITE=True
+
+# Nomba API (leave blank to use mock mode — demo still works without credentials)
+NOMBA_ENV=sandbox
+NOMBA_CLIENT_ID=
+NOMBA_CLIENT_SECRET=
+NOMBA_ACCOUNT_ID=
+NOMBA_WEBHOOK_SIGNING_KEY=
 ```
 
 ### Frontend (Next.js)
@@ -97,6 +101,50 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ---
+
+## Nomba Sandbox Setup
+
+PayPilot integrates with the **real Nomba API** for virtual account provisioning, webhook verification, and transaction lookup. The system gracefully falls back to **mock mode** if credentials are not configured — the demo always works.
+
+### 1. Obtain Sandbox Credentials
+1. Create a corporate account at [nomba.com](https://nomba.com).
+2. Navigate to **Settings → API Keys** in the Nomba Dashboard.
+3. Generate your `clientId`, `clientSecret`, and `accountId` under the **Sandbox** tab.
+4. (Optional) Create a Webhook endpoint pointing to your server and copy the **Signing Secret**.
+
+### 2. Configure Environment Variables
+```env
+NOMBA_ENV=sandbox
+NOMBA_CLIENT_ID=your-client-id
+NOMBA_CLIENT_SECRET=your-client-secret
+NOMBA_ACCOUNT_ID=your-account-id
+NOMBA_WEBHOOK_SIGNING_KEY=your-webhook-signing-secret   # optional
+```
+
+### 3. How the Integration Works
+
+| Feature | Endpoint | Description |
+|---|---|---|
+| Auth | `POST /v1/auth/token/issue` | OAuth2 client credentials, token cached 23 hrs |
+| Virtual Account | `POST /v1/accounts/virtual` | Creates a static dedicated NUBAN per customer |
+| Webhook Verify | `nomba-signature` header | HMAC-SHA256 of raw payload using signing key |
+| Transaction Lookup | `GET /v1/transactions/accounts/single` | Verify payment status; trigger manual reconciliation |
+
+### 4. Fallback Mode (no credentials needed)
+If `NOMBA_CLIENT_ID`, `NOMBA_CLIENT_SECRET`, or `NOMBA_ACCOUNT_ID` are empty, the system **automatically uses `MockNombaProvider`**. Virtual accounts are assigned random 10-digit NUBANs and the webhook simulator works end-to-end without any external calls.
+
+### 5. Running Tests
+
+```bash
+# Full backend API tests (all flows, works without Nomba credentials)
+cd backend && .venv/bin/python test_api.py
+
+# Nomba-specific unit tests (mock fallback, token caching, provisioning, signature verification)
+cd backend && .venv/bin/python test_nomba.py -v
+```
+
+---
+
 
 ## Seeding Demo Data
 

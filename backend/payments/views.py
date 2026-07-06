@@ -10,6 +10,7 @@ from invoices.models import Invoice
 from notifications.models import Notification
 from .models import Payment
 from .serializers import PaymentSerializer
+from payments.reconciliation import ReconciliationService
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Payment.objects.all().order_by('-created_at')
@@ -161,3 +162,47 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = self.get_serializer(payment)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='verify-nomba')
+    def verify_nomba_transaction(self, request, pk=None):
+        payment = self.get_object()
+        
+        # Instantiate NombaProvider
+        from virtual_accounts.providers import NombaProvider
+        provider = NombaProvider()
+        
+        try:
+            tx_data = provider.get_transaction(payment.reference)
+            if tx_data.get("status") == "SUCCESS":
+                # Re-run reconciliation mapping cleanly
+                mapped_payload = {
+                    "event": "virtual_account.payment_received",
+                    "data": {
+                        "account_number": payment.virtual_account.account_number if payment.virtual_account else "",
+                        "amount": tx_data.get("amount", payment.amount),
+                        "reference": payment.reference,
+                        "sender_name": tx_data.get("sender_name", payment.sender_name),
+                        "sender_account_number": payment.sender_account_number,
+                        "bank_name": tx_data.get("bank_name", "Nomba Bank")
+                    }
+                }
+                result = ReconciliationService.process_webhook_payment(mapped_payload)
+                payment.refresh_from_db()
+                serializer = self.get_serializer(payment)
+                return Response({
+                    "status": "SUCCESS",
+                    "message": "Payment verified and reconciled with Nomba.",
+                    "payment": serializer.data,
+                    "reconciliation_details": result
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "status": "FAILED",
+                    "message": tx_data.get("message", "Nomba reports this transaction is not successful or not found.")
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "ERROR",
+                "message": f"Verification call failed: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
