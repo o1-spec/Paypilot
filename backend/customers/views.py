@@ -128,6 +128,7 @@ class CustomerDemoActionView(APIView):
             merchant = request.user
             
             # Clean first to prevent double-seed conflicts
+            Invoice.objects.filter(merchant=merchant).delete()
             Customer.objects.filter(merchant=merchant).delete()
             Payment.objects.filter(merchant=merchant).delete()
             Payment.objects.filter(status='UNMATCHED').delete()

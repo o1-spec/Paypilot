@@ -8,14 +8,14 @@ import Table from '@/components/Table';
 import StatusBadge from '@/components/StatusBadge';
 import EmptyState from '@/components/EmptyState';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
-import { 
-  DollarSign, 
-  Send, 
-  HelpCircle, 
-  Check, 
-  AlertCircle, 
-  Sparkles, 
-  AlertTriangle, 
+import {
+  DollarSign,
+  Send,
+  HelpCircle,
+  Check,
+  AlertCircle,
+  Sparkles,
+  AlertTriangle,
   RefreshCw,
   GitCommit,
   ArrowRight,
@@ -28,11 +28,11 @@ import {
   CheckCircle2,
   Share2
 } from 'lucide-react';
-import { 
-  fetchPayments, 
-  fetchCustomers, 
-  assignUnmatchedPayment, 
-  markPaymentReviewed, 
+import {
+  fetchPayments,
+  fetchCustomers,
+  assignUnmatchedPayment,
+  markPaymentReviewed,
   triggerWebhook,
   Customer,
   Payment,
@@ -49,7 +49,7 @@ export default function PaymentsPage() {
   const [searchVal, setSearchVal] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isSimOpen, setIsSimOpen] = useState(false);
-  
+
   // Claim states
   const [isClaimOpen, setIsClaimOpen] = useState(false);
   const [claimingPayment, setClaimingPayment] = useState<Payment | null>(null);
@@ -292,7 +292,7 @@ export default function PaymentsPage() {
         {/* Dynamic visual diagram tracing the auto-reconciliation engine pipeline */}
         <div className="bg-slate-950 border border-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden hidden lg:block">
           <div className="absolute top-0 right-0 h-[200px] w-[200px] rounded-full bg-indigo-500/10 blur-[50px] pointer-events-none" />
-          
+
           <div className="space-y-4">
             <div>
               <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Auto-Reconciliation Flow</span>
@@ -302,7 +302,7 @@ export default function PaymentsPage() {
             <div className="grid grid-cols-5 gap-6 pt-3 relative">
               {/* Stepper Grid Connectors */}
               <div className="absolute top-8 left-[10%] right-[10%] h-0.5 bg-slate-800 z-0" />
-              
+
               <div className="flex flex-col items-center text-center space-y-2 z-10">
                 <div className="h-10 w-10 rounded-xl bg-indigo-600 border border-indigo-500 flex items-center justify-center font-bold text-white shadow-md">
                   <DollarSign className="h-5 w-5" />
@@ -428,7 +428,7 @@ export default function PaymentsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 pt-3 relative">
-                      
+
                       {/* Step 1 */}
                       <div className="space-y-2.5 text-xs text-left">
                         <div className="flex items-center gap-2 font-bold text-slate-900">
@@ -445,11 +445,10 @@ export default function PaymentsPage() {
                       {/* Step 2 */}
                       <div className="space-y-2.5 text-xs text-left">
                         <div className="flex items-center gap-2 font-bold text-slate-900">
-                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${
-                            target.account_number 
-                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100' 
+                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${target.account_number
+                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100'
                               : 'bg-rose-50 text-rose-650 border-rose-100'
-                          }`}>2</div>
+                            }`}>2</div>
                           VA Identified
                         </div>
                         <div className="text-[10px] text-slate-500 space-y-1 pl-8">
@@ -467,11 +466,10 @@ export default function PaymentsPage() {
                       {/* Step 3 */}
                       <div className="space-y-2.5 text-xs text-left">
                         <div className="flex items-center gap-2 font-bold text-slate-900">
-                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${
-                            target.customer_name 
-                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100' 
+                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${target.customer_name
+                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100'
                               : 'bg-rose-50 text-rose-650 border-rose-100'
-                          }`}>3</div>
+                            }`}>3</div>
                           Customer Found
                         </div>
                         <div className="text-[10px] text-slate-500 space-y-1 pl-8">
@@ -489,13 +487,12 @@ export default function PaymentsPage() {
                       {/* Step 4 */}
                       <div className="space-y-2.5 text-xs text-left">
                         <div className="flex items-center gap-2 font-bold text-slate-900">
-                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${
-                            isMatched 
-                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100' 
-                              : isReview 
-                                ? 'bg-amber-50 text-amber-650 border-amber-100' 
+                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${isMatched
+                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100'
+                              : isReview
+                                ? 'bg-amber-50 text-amber-650 border-amber-100'
                                 : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }`}>4</div>
+                            }`}>4</div>
                           Invoice Updated
                         </div>
                         <div className="text-[10px] text-slate-500 space-y-1 pl-8">
@@ -515,18 +512,17 @@ export default function PaymentsPage() {
                       {/* Step 5 */}
                       <div className="space-y-2.5 text-xs text-left">
                         <div className="flex items-center gap-2 font-bold text-slate-900">
-                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${
-                            isMatched 
-                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100' 
+                          <div className={`h-6 w-6 rounded-full border flex items-center justify-center font-bold text-[10px] ${isMatched
+                              ? 'bg-emerald-50 text-emerald-650 border-emerald-100'
                               : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }`}>5</div>
+                            }`}>5</div>
                           Alert Sent
                         </div>
                         <div className="text-[10px] text-slate-500 space-y-1 pl-8">
                           {isMatched ? (
                             <>
                               <span className="block text-slate-600 font-medium">Webhook cleared successfully</span>
-                              <span className="block text-emerald-650 font-semibold flex items-center gap-1">
+                              <span className="text-emerald-650 font-semibold flex items-center gap-1">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                                 Notifications active
                               </span>
@@ -664,7 +660,7 @@ export default function PaymentsPage() {
               </div>
 
               <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 text-[10px] text-amber-800 leading-normal flex gap-2">
-                <AlertCircle className="h-4.5 w-4.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   This action manually links this unmatched payment. If an active pending invoice exists, it will increment the paid balance and update its status.
                 </div>

@@ -7,12 +7,12 @@ import StatCard from '@/components/StatCard';
 import StatusBadge from '@/components/StatusBadge';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import EmptyState from '@/components/EmptyState';
-import { 
-  Users, 
-  TrendingUp, 
-  Clock, 
-  AlertTriangle, 
-  Plus, 
+import {
+  Users,
+  TrendingUp,
+  Clock,
+  AlertTriangle,
+  Plus,
   Send,
   Sparkles,
   ArrowUpRight,
@@ -26,11 +26,11 @@ import {
   Calendar
 } from 'lucide-react';
 import Link from 'next/link';
-import { 
-  fetchDashboard, 
-  fetchCustomers, 
-  createCustomer, 
-  createInvoice, 
+import {
+  fetchDashboard,
+  fetchCustomers,
+  createCustomer,
+  createInvoice,
   triggerWebhook,
   seedDemoData,
   resetDemoData,
@@ -127,7 +127,7 @@ export default function DashboardPage() {
     setActionError(null);
     // Step 1: Incoming transfer registered
     setDemoStep(1);
-    
+
     // Step 2: Wema bank identified
     setTimeout(() => {
       setDemoStep(2);
@@ -339,7 +339,7 @@ export default function DashboardPage() {
       <TopNavbar title="Dashboard" />
 
       <main className="flex-1 p-8 max-w-7xl w-full mx-auto space-y-8 animate-in fade-in duration-300">
-        
+
         {/* Welcome Premium Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-slate-950 px-8 py-8 text-white shadow-xl border border-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="absolute top-0 right-0 h-[250px] w-[250px] rounded-full bg-indigo-500/10 blur-[60px] pointer-events-none" />
@@ -378,7 +378,7 @@ export default function DashboardPage() {
               <h2 className="text-base font-extrabold text-slate-900 tracking-tight mt-1">Automatic Reconciliation Demo Sandbox</h2>
               <p className="text-xs text-slate-400 mt-0.5">Seed demo portfolios, clear records clean, and run simulated payment webhook streams to watch the auto-reconciliation engine in real time.</p>
             </div>
-            
+
             <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
               <button
                 onClick={handleSeedDemo}
@@ -420,12 +420,10 @@ export default function DashboardPage() {
               {/* Steps visual stepper */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 relative">
                 {/* Step 1 */}
-                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                  demoStep >= 1 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
-                }`}>
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                    demoStep > 1 ? 'bg-emerald-500 text-white' : 'bg-indigo-600 text-white'
+                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${demoStep >= 1 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
                   }`}>
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${demoStep > 1 ? 'bg-emerald-500 text-white' : 'bg-indigo-600 text-white'
+                    }`}>
                     {demoStep > 1 ? <CheckCircle2 className="h-4 w-4" /> : '1'}
                   </div>
                   <div className="text-xs">
@@ -435,12 +433,10 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Step 2 */}
-                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                  demoStep >= 2 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
-                }`}>
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                    demoStep > 2 ? 'bg-emerald-500 text-white' : demoStep === 2 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-200 text-slate-400'
+                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${demoStep >= 2 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
                   }`}>
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${demoStep > 2 ? 'bg-emerald-500 text-white' : demoStep === 2 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-200 text-slate-400'
+                    }`}>
                     {demoStep > 2 ? <CheckCircle2 className="h-4 w-4" /> : '2'}
                   </div>
                   <div className="text-xs">
@@ -450,12 +446,10 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Step 3 */}
-                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                  demoStep >= 3 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
-                }`}>
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                    demoStep > 3 ? 'bg-emerald-500 text-white' : demoStep === 3 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-200 text-slate-400'
+                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${demoStep >= 3 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
                   }`}>
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${demoStep > 3 ? 'bg-emerald-500 text-white' : demoStep === 3 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-200 text-slate-400'
+                    }`}>
                     {demoStep > 3 ? <CheckCircle2 className="h-4 w-4" /> : '3'}
                   </div>
                   <div className="text-xs">
@@ -465,12 +459,10 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Step 4 */}
-                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                  demoStep >= 4 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
-                }`}>
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                    demoStep > 4 ? 'bg-emerald-500 text-white' : demoStep === 4 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-200 text-slate-400'
+                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${demoStep >= 4 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
                   }`}>
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${demoStep > 4 ? 'bg-emerald-500 text-white' : demoStep === 4 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-200 text-slate-400'
+                    }`}>
                     {demoStep > 4 ? <CheckCircle2 className="h-4 w-4" /> : '4'}
                   </div>
                   <div className="text-xs">
@@ -480,12 +472,10 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Step 5 */}
-                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                  demoStep >= 5 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
-                }`}>
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                    demoStep === 5 ? 'bg-emerald-500 text-white animate-bounce' : 'bg-slate-200 text-slate-400'
+                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${demoStep >= 5 ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-50'
                   }`}>
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${demoStep === 5 ? 'bg-emerald-500 text-white animate-bounce' : 'bg-slate-200 text-slate-400'
+                    }`}>
                     {demoStep === 5 ? <CheckCircle2 className="h-4 w-4" /> : '5'}
                   </div>
                   <div className="text-xs">
@@ -507,10 +497,10 @@ export default function DashboardPage() {
 
         {/* 1. TOP CARDS (6 Metrics Grid) */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-          
+
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2 hover:shadow-md transition-shadow">
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Revenue</span>
-            <span className="block text-lg font-bold text-slate-900 tracking-tight block truncate">
+            <span className="text-lg font-bold text-slate-900 tracking-tight block truncate">
               {formatNaira(data?.total_revenue || 0)}
             </span>
             <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
@@ -521,7 +511,7 @@ export default function DashboardPage() {
 
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2 hover:shadow-md transition-shadow">
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Outstanding</span>
-            <span className="block text-lg font-bold text-slate-900 tracking-tight block truncate">
+            <span className="block text-lg font-bold text-slate-900 tracking-tight truncate">
               {formatNaira(data?.outstanding_balance || 0)}
             </span>
             <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600">
@@ -578,7 +568,7 @@ export default function DashboardPage() {
 
         {/* 2. MIDDLE ROW (Charts Grid) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Revenue Chart Card */}
           <div className="lg:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between h-[360px]">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
@@ -657,7 +647,7 @@ export default function DashboardPage() {
 
             {/* Pure CSS Bar Breakdowns */}
             <div className="space-y-4 my-auto">
-              
+
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700">
                   <span className="flex items-center gap-1.5">
@@ -709,7 +699,7 @@ export default function DashboardPage() {
 
         {/* 3. BOTTOM ROW (Recent Payments, Notifications, Recent Customers, Quick Actions) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
+
           {/* Column A: Recent Payments */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[380px]">
             <div>
@@ -771,7 +761,7 @@ export default function DashboardPage() {
           {/* Column C: Quick Actions & Recent Customers */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[380px]">
             <div className="space-y-6">
-              
+
               {/* Quick Actions Panel */}
               <div>
                 <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider mb-3">Quick Actions</h3>
@@ -835,7 +825,7 @@ export default function DashboardPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
             <h3 className="text-base font-bold text-slate-900 mb-1.5">Create Customer</h3>
             <p className="text-xs text-slate-400 mb-5">Provide details to generate a customer profile and virtual account.</p>
-            
+
             <form onSubmit={handleCreateCustomer} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Contact Name</label>
@@ -905,7 +895,7 @@ export default function DashboardPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
             <h3 className="text-base font-bold text-slate-900 mb-1.5">Issue Invoice</h3>
             <p className="text-xs text-slate-400 mb-5">Create invoice mapped to customer virtual accounts.</p>
-            
+
             <form onSubmit={handleCreateInvoice} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Assign Customer</label>
@@ -982,7 +972,7 @@ export default function DashboardPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
             <h3 className="text-base font-bold text-slate-900 mb-1.5">Nomba Webhook Simulator</h3>
             <p className="text-xs text-slate-400 mb-5">Simulate an inbound bank transfer deposit landing in the system.</p>
-            
+
             <form onSubmit={handleTriggerWebhook} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Target Virtual Account</label>
