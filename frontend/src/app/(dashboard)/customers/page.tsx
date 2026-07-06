@@ -1,27 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import TopNavbar from '@/components/TopNavbar';
-import { fetchCustomers, createCustomer, Customer } from '@/lib/api';
-import { Users, Search, Plus, UserCheck, AlertTriangle, RefreshCw, ChevronRight } from 'lucide-react';
+import SearchBar from '@/components/SearchBar';
+import Table from '@/components/Table';
+import StatusBadge from '@/components/StatusBadge';
+import EmptyState from '@/components/EmptyState';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import { Users, Plus, ChevronRight, AlertTriangle, RefreshCw, Mail, Phone, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+import { 
+  fetchCustomers, 
+  createCustomer, 
+  Customer 
+} from '@/lib/api';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Modal states
+  const [searchVal, setSearchVal] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Form states
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [businessName, setBusinessName] = useState('');
+
   const [actionLoading, setActionLoading] = useState(false);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const loadCustomers = async () => {
@@ -31,7 +39,7 @@ export default function CustomersPage() {
       const data = await fetchCustomers();
       setCustomers(data);
     } catch (e: any) {
-      setError(e.message || 'Failed to load customers list.');
+      setError(e.response?.data?.detail || e.message || 'Failed to retrieve customers.');
     } finally {
       setLoading(false);
     }
@@ -41,87 +49,165 @@ export default function CustomersPage() {
     loadCustomers();
   }, []);
 
-  const handleCreateCustomer = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading(true);
     setActionError(null);
-    setActionSuccess(null);
     try {
-      const newCust = await createCustomer({ 
-        full_name: fullName, 
-        email, 
-        phone, 
-        business_name: businessName 
+      const newCust = await createCustomer({
+        full_name: fullName,
+        email,
+        phone,
+        business_name: businessName || undefined,
       });
-      setActionSuccess(`Customer ${newCust.full_name} created! VA details provisioned.`);
+
+      // Optimistically update local array
+      setCustomers((prev) => [newCust, ...prev]);
+      setIsModalOpen(false);
+
+      // Reset forms
       setFullName('');
       setEmail('');
       setPhone('');
       setBusinessName('');
-      
-      await loadCustomers();
-      
-      setTimeout(() => {
-        setIsModalOpen(false);
-        setActionSuccess(null);
-      }, 1500);
     } catch (e: any) {
-      setActionError(e.message || 'Failed to create customer');
+      const data = e.response?.data;
+      setActionError(data?.error || data?.detail || 'Failed to register customer profile.');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Filter customers based on search query
-  const filteredCustomers = customers.filter(c => 
-    (c.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.virtual_account?.account_number || '').includes(searchQuery)
+  const filteredCustomers = customers.filter(
+    (c) =>
+      (c.full_name || '').toLowerCase().includes(searchVal.toLowerCase()) ||
+      (c.business_name || '').toLowerCase().includes(searchVal.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(searchVal.toLowerCase()) ||
+      (c.virtual_account?.account_number || '').includes(searchVal)
   );
 
-  return (
-    <div className="flex-1 flex flex-col min-h-screen">
-      <TopNavbar title="Customers Directory" />
-      
-      <div className="flex-1 p-8 space-y-6 max-w-7xl w-full mx-auto">
-        {/* Controls header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name, email, VA..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-xs outline-none focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
-            />
+  const getInitialsColor = (name: string) => {
+    const colors = [
+      'bg-indigo-50 text-indigo-650 border-indigo-150',
+      'bg-emerald-50 text-emerald-650 border-emerald-150',
+      'bg-purple-50 text-purple-650 border-purple-150',
+      'bg-rose-50 text-rose-650 border-rose-150',
+      'bg-amber-50 text-amber-650 border-amber-150',
+    ];
+    const sum = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[sum % colors.length];
+  };
+
+  const columns = [
+    {
+      header: 'Customer',
+      accessor: (c: Customer) => {
+        const initials = c.full_name
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase();
+        return (
+          <div className="flex items-center gap-3">
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border font-bold text-xs ${getInitialsColor(c.full_name)}`}>
+              {initials}
+            </div>
+            <div>
+              <span className="block font-bold text-slate-900 tracking-tight">{c.full_name}</span>
+              <span className="block text-[10px] text-slate-400 font-semibold mt-0.5">{c.business_name || 'Individual'}</span>
+            </div>
           </div>
-          
-          <button
-            onClick={() => {
-              setActionError(null);
-              setActionSuccess(null);
-              setIsModalOpen(true);
-            }}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-xs font-bold text-white py-2.5 px-4.5 shadow-md shadow-indigo-600/10 transition-all"
-          >
-            <Plus className="h-4 w-4 text-white" />
-            Add New Customer
-          </button>
+        );
+      },
+    },
+    {
+      header: 'Contact Info',
+      accessor: (c: Customer) => (
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1.5 text-xs text-slate-650 font-medium">
+            <Mail className="h-3.5 w-3.5 text-slate-400" />
+            {c.email}
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
+            <Phone className="h-3.5 w-3.5 text-slate-400" />
+            {c.phone}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Virtual Account',
+      accessor: (c: Customer) => (
+        <div className="space-y-0.5">
+          {c.virtual_account ? (
+            <>
+              <div className="flex items-center gap-1.5 font-mono font-bold text-xs text-slate-850">
+                <CreditCard className="h-3.5 w-3.5 text-slate-450" />
+                {c.virtual_account.account_number}
+              </div>
+              <span className="block text-[10px] text-slate-400 font-semibold pl-5">{c.virtual_account.bank_name}</span>
+            </>
+          ) : (
+            <span className="text-slate-450 italic text-[11px]">No account provisioned</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      accessor: (c: Customer) => <StatusBadge status={c.status || 'ACTIVE'} />,
+    },
+    {
+      header: 'Ledger Audit',
+      align: 'right' as const,
+      accessor: (c: Customer) => (
+        <Link
+          href={`/customers/${c.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1.5 transition-all"
+        >
+          View Account
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      ),
+    },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col min-h-screen bg-slate-50/50">
+      <TopNavbar title="Customers Directory" />
+
+      <main className="flex-1 p-8 max-w-7xl w-full mx-auto space-y-6 animate-in fade-in duration-200">
+        <PageHeader
+          title="Customers"
+          description="Register portfolios of business contacts and track their allocated virtual balance endpoints."
+          actions={
+            <button
+              onClick={() => { setActionError(null); setIsModalOpen(true); }}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-950 hover:bg-slate-900 text-xs font-bold text-white py-2.5 px-4.5 shadow-md shadow-slate-900/10 transition-all duration-150"
+            >
+              <Plus className="h-4 w-4 text-white" />
+              Add Customer
+            </button>
+          }
+        />
+
+        {/* Filter controls row */}
+        <div className="flex justify-between items-center bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm">
+          <SearchBar
+            value={searchVal}
+            onChange={setSearchVal}
+            placeholder="Search by customer name, email, account..."
+          />
         </div>
 
-        {/* Loading/Error/Table wrapper */}
         {loading ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center">
-            <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <span className="text-xs font-semibold text-slate-500">Loading customers...</span>
-          </div>
+          <LoadingSkeleton type="table" />
         ) : error ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-4 shadow-sm">
             <AlertTriangle className="h-10 w-10 text-red-500 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-900">Failed to Load Customers</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">Make sure the Django REST API is running at http://localhost:8000.</p>
+            <h3 className="text-sm font-bold text-slate-900">Failed to load customer list</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">{error}</p>
             <button
               onClick={loadCustomers}
               className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
@@ -130,140 +216,101 @@ export default function CustomersPage() {
               Retry
             </button>
           </div>
-        ) : filteredCustomers.length > 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-6">Customer & Business</th>
-                    <th className="py-3 px-6">Contact Info</th>
-                    <th className="py-3 px-6">Nomba Virtual Account</th>
-                    <th className="py-3 px-6">Status</th>
-                    <th className="py-3 px-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCustomers.map((cust) => (
-                    <tr key={cust.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4.5 px-6 font-semibold text-slate-900">
-                        {cust.full_name}
-                        <span className="block text-[10px] font-normal text-slate-400 mt-0.5">{cust.business_name}</span>
-                      </td>
-                      <td className="py-4.5 px-6 text-slate-600">
-                        {cust.email}
-                        <span className="block text-[10px] text-slate-400 mt-0.5">{cust.phone}</span>
-                      </td>
-                      <td className="py-4.5 px-6">
-                        {cust.virtual_account ? (
-                          <div>
-                            <span className="font-mono font-bold text-slate-900">{cust.virtual_account.account_number}</span>
-                            <span className="block text-[10px] text-slate-500 mt-0.5">{cust.virtual_account.bank_name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 italic">No account provisioned</span>
-                        )}
-                      </td>
-                      <td className="py-4.5 px-6">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                          cust.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-50 text-slate-500 border border-slate-200'
-                        }`}>
-                          <UserCheck className="h-3 w-3" />
-                          {cust.status.charAt(0).toUpperCase() + cust.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="py-4.5 px-6 text-right">
-                        <Link
-                          href={`/customers/${cust.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-500"
-                        >
-                          View Account
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         ) : (
-          <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-4 shadow-sm">
-            <div className="rounded-full bg-slate-50 p-4 text-slate-400 w-14 h-14 flex items-center justify-center mx-auto">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-800">No Customers Found</h3>
-              <p className="text-xs text-slate-400 max-w-xs mx-auto mt-1">There are no customers matching your search query. Try checking spelling or register a new customer.</p>
-            </div>
-          </div>
+          <Table
+            columns={columns}
+            data={filteredCustomers}
+            emptyState={
+              <EmptyState
+                title="No customers registered"
+                description="Create customer profiles to provision persistent virtual accounts automatically."
+                icon={Users}
+                action={{
+                  label: 'Add Customer',
+                  onClick: () => setIsModalOpen(true),
+                }}
+              />
+            }
+          />
         )}
-      </div>
+      </main>
 
-      {/* Create Customer Modal */}
+      {/* Create Customer modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Register New Customer</h3>
-            <p className="text-xs text-slate-400 mb-5">Adds a profile and auto-provisions a Nomba Virtual Account.</p>
-            
-            <form onSubmit={handleCreateCustomer} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Contact Name</label>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <h3 className="text-base font-bold text-slate-900 mb-1.5">Register Customer</h3>
+            <p className="text-xs text-slate-400 mb-5">Creates a profile and auto-provisions a Nomba Virtual Account details.</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Contact Name</label>
                 <input
-                  type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Tunde Bakare"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all"
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Email Address</label>
                 <input
-                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. tunde@logistics.ng"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Phone Number</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Phone</label>
                   <input
-                    type="text" required value={phone} onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. +2348011111111"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
+                    type="text"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+234..."
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Business / Legal Name</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Business Name</label>
                   <input
-                    type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="e.g. Tunde Logistics"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800"
+                    type="text"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all"
                   />
                 </div>
               </div>
 
-              {actionError && <div className="rounded-lg bg-red-50 text-red-600 text-[10px] font-bold p-3 border border-red-200">{actionError}</div>}
-              {actionSuccess && <div className="rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-bold p-3 border border-emerald-200">{actionSuccess}</div>}
+              {actionError && (
+                <div className="rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold p-3 border border-rose-200 leading-normal">
+                  ⚠️ {actionError}
+                </div>
+              )}
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl border border-slate-200 text-xs font-semibold px-4 py-2 hover:bg-slate-50 text-slate-600"
+                  className="rounded-xl border border-slate-200 text-xs font-semibold px-4.5 py-2 hover:bg-slate-50 text-slate-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white px-5 py-2.5 shadow-md shadow-indigo-600/10"
+                  className="rounded-xl bg-slate-950 hover:bg-slate-900 text-xs font-bold text-white px-5 py-2.5 shadow-md disabled:opacity-50"
                 >
-                  {actionLoading ? 'Creating...' : 'Register Customer'}
+                  {actionLoading ? 'Registering...' : 'Register Customer'}
                 </button>
               </div>
             </form>

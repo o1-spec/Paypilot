@@ -110,3 +110,150 @@ class CustomerStatementView(APIView):
             "payments": PaymentSerializer(payments, many=True).data,
             "statement_lines": lines
         }, status=status.HTTP_200_OK)
+
+
+class CustomerDemoActionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        action = request.data.get('action')
+        if action == 'seed':
+            from decimal import Decimal
+            import random
+            import datetime
+            from django.utils import timezone
+            from notifications.models import Notification
+            from virtual_accounts.models import VirtualAccount
+            
+            merchant = request.user
+            
+            # Clean first to prevent double-seed conflicts
+            Customer.objects.filter(merchant=merchant).delete()
+            Payment.objects.filter(merchant=merchant).delete()
+            Payment.objects.filter(status='UNMATCHED').delete()
+            Notification.objects.filter(merchant=merchant).delete()
+            
+            # Seed Customers
+            sample_customers = [
+                {'full_name': 'Tunde Bakare', 'email': 'tunde@logistics.ng', 'phone': '+2348031112222', 'business_name': 'Tunde Logistics'},
+                {'full_name': 'Amaka Okeke', 'email': 'amaka@stores.ng', 'phone': '+2348032223333', 'business_name': 'Amaka Stores'},
+                {'full_name': 'Bayo Shonibare', 'email': 'bayo@pharmacy.ng', 'phone': '+2348033334444', 'business_name': 'Bayo Pharmacy Ltd'},
+                {'full_name': 'Helen Adebayo', 'email': 'helen@tutors.ng', 'phone': '+2348034445555', 'business_name': 'Prime Tutors'},
+                {'full_name': 'Uche Nwosu', 'email': 'uche@retail.ng', 'phone': '+2348035556666', 'business_name': 'Nwosu Retail Ventures'},
+            ]
+            
+            customers = []
+            for cust_data in sample_customers:
+                cust = Customer.objects.create(
+                    merchant=merchant,
+                    full_name=cust_data['full_name'],
+                    email=cust_data['email'],
+                    phone=cust_data['phone'],
+                    business_name=cust_data['business_name'],
+                    status='active'
+                )
+                # Automatically provision mock virtual account details
+                VirtualAccountService.provision_account(cust)
+                customers.append(cust)
+                
+            # Seed Invoices and payments
+            due_in_10_days = timezone.now().date() + datetime.timedelta(days=10)
+            overdue_5_days = timezone.now().date() - datetime.timedelta(days=5)
+
+            for i, cust in enumerate(customers):
+                # Invoice A (PAID)
+                inv1 = Invoice.objects.create(
+                    merchant=merchant,
+                    customer=cust,
+                    invoice_number=f"INV-2026-00{i+1}A",
+                    amount=Decimal(random.randint(5000, 25000)),
+                    amount_paid=0,
+                    description=f"Logistics / Supply Delivery order 0{i+1}",
+                    due_date=overdue_5_days,
+                    status='PENDING'
+                )
+                inv1.amount_paid = inv1.amount
+                inv1.status = 'PAID'
+                inv1.save()
+
+                Payment.objects.create(
+                    merchant=merchant,
+                    customer=cust,
+                    virtual_account=cust.virtual_account,
+                    invoice=inv1,
+                    amount=inv1.amount,
+                    reference=f"TXN-{random.randint(100000, 999999)}",
+                    sender_name=cust.full_name,
+                    sender_account_number=f"0012{random.randint(1000, 9999)}",
+                    status='MATCHED',
+                    raw_payload={"mock": "payload"}
+                )
+
+                # Invoice B (PENDING / PARTIAL)
+                is_partial = i % 2 == 0
+                inv2 = Invoice.objects.create(
+                    merchant=merchant,
+                    customer=cust,
+                    invoice_number=f"INV-2026-00{i+1}B",
+                    amount=Decimal(random.randint(10000, 50000)),
+                    amount_paid=Decimal(5000) if is_partial else Decimal(0),
+                    description=f"Monthly service billing - Cycle 0{i+1}",
+                    due_date=due_in_10_days,
+                    status='PARTIAL' if is_partial else 'PENDING'
+                )
+
+                if is_partial:
+                    Payment.objects.create(
+                        merchant=merchant,
+                        customer=cust,
+                        virtual_account=cust.virtual_account,
+                        invoice=inv2,
+                        amount=Decimal(5000),
+                        reference=f"TXN-{random.randint(100000, 999999)}",
+                        sender_name=cust.full_name,
+                        sender_account_number=f"0012{random.randint(1000, 9999)}",
+                        status='MATCHED',
+                        raw_payload={"mock": "payload"}
+                    )
+
+            # Unmatched payment
+            Payment.objects.create(
+                merchant=None,
+                customer=None,
+                virtual_account=None,
+                invoice=None,
+                amount=Decimal(18500.00),
+                reference=f"TXN-UNMATCHED-{random.randint(100000, 999999)}",
+                sender_name="Musa Ibrahim",
+                sender_account_number="0033441122",
+                status='UNMATCHED',
+                raw_payload={"mock": "payload", "error": "Unknown destination account number"}
+            )
+
+            # Notifications
+            Notification.objects.create(
+                merchant=merchant,
+                title="System Active",
+                message="PayPilot Dedicated Virtual Account reconciliation engine initialized.",
+                type="SYSTEM"
+            )
+            Notification.objects.create(
+                merchant=merchant,
+                title="Unmatched Payment Warning",
+                message="An inbound transfer of NGN 18,500.00 from Musa Ibrahim could not be matched. Please review unmatched logs.",
+                type="UNMATCHED_PAYMENT"
+            )
+            return Response({"message": "Successfully seeded demo dataset!"}, status=status.HTTP_200_OK)
+
+        elif action == 'reset':
+            from notifications.models import Notification
+            
+            # Wipes out all merchant resources to demonstrate clean empty states
+            Invoice.objects.filter(merchant=request.user).delete()
+            Payment.objects.filter(merchant=request.user).delete()
+            Payment.objects.filter(status='UNMATCHED').delete()
+            Customer.objects.filter(merchant=request.user).delete()
+            Notification.objects.filter(merchant=request.user).delete()
+            return Response({"message": "Successfully wiped demo records clean!"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Invalid action. Supported: 'seed', 'reset'."}, status=status.HTTP_400_BAD_REQUEST)

@@ -1,4 +1,47 @@
+import axios from 'axios';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor to load token dynamically from localStorage
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const session = localStorage.getItem('paypilot_demo_session');
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          if (parsed.token) {
+            config.headers.Authorization = `Bearer ${parsed.token}`;
+          }
+        } catch (e) {}
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Interceptor to handle responses and catch auth expired states
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      // Avoid redirecting if we are already on the landing page
+      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        localStorage.removeItem('paypilot_demo_session');
+        window.location.href = '/';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export interface VirtualAccount {
   id: string;
@@ -60,110 +103,173 @@ export interface Payment {
 }
 
 export interface DashboardData {
+  total_customers: number;
+  total_virtual_accounts: number;
   total_revenue: number;
+  todays_revenue: number;
   outstanding_balance: number;
-  active_customers: number;
-  unmatched_transfers: number;
+  pending_invoices_count: number;
+  paid_invoices_count: number;
+  partial_invoices_count: number;
+  overpaid_invoices_count: number;
+  unmatched_payments_count: number;
   recent_payments: Payment[];
+  recent_invoices: Invoice[];
   recent_notifications: any[];
+  monthly_revenue_summary: { month: string; amount: number }[];
+  invoice_status_breakdown: Record<string, number>;
+}
+
+export interface StatementLine {
+  date: string;
+  type: 'INVOICE' | 'PAYMENT';
+  description: string;
+  debit: string;
+  credit: string;
+  reference: string;
+  running_balance: number;
 }
 
 export interface CustomerReport {
   customer: Customer;
-  summary: {
-    total_invoiced: number;
-    total_paid: number;
-    outstanding_balance: number;
-  };
+  virtual_account: VirtualAccount | null;
+  total_invoice_amount: number;
+  total_paid: number;
+  outstanding_balance: number;
   invoices: Invoice[];
   payments: Payment[];
+  statement_lines: StatementLine[];
 }
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+}
+
+// 🔐 Authentication APIs
+export async function loginMerchant(payload: any) {
+  const res = await apiClient.post('/api/auth/login/', payload);
+  return res.data;
+}
+
+export async function registerMerchant(payload: any) {
+  const res = await apiClient.post('/api/auth/register/', payload);
+  return res.data;
+}
+
+// 📊 Dashboard APIs
 export async function fetchDashboard(): Promise<DashboardData> {
-  const res = await fetch(`${API_BASE_URL}/api/dashboard/summary/`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch dashboard metrics');
-  return res.json();
+  const res = await apiClient.get('/api/dashboard/summary/');
+  return res.data;
 }
 
+// 👥 Customer APIs
 export async function fetchCustomers(): Promise<Customer[]> {
-  const res = await fetch(`${API_BASE_URL}/api/customers/`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch customers');
-  return res.json();
+  const res = await apiClient.get('/api/customers/');
+  return res.data;
 }
 
 export async function fetchCustomer(id: string): Promise<Customer> {
-  const res = await fetch(`${API_BASE_URL}/api/customers/${id}/`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Failed to fetch customer ${id}`);
-  return res.json();
+  const res = await apiClient.get(`/api/customers/${id}/`);
+  return res.data;
 }
 
-export async function fetchInvoices(): Promise<Invoice[]> {
-  const res = await fetch(`${API_BASE_URL}/api/invoices/`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch invoices');
-  return res.json();
+export async function createCustomer(payload: any): Promise<Customer> {
+  const res = await apiClient.post('/api/customers/', payload);
+  return res.data;
 }
 
-export async function fetchPayments(): Promise<Payment[]> {
-  const res = await fetch(`${API_BASE_URL}/api/payments/`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch payments');
-  return res.json();
+// 🧾 Invoice APIs
+export async function fetchInvoices(params?: any): Promise<Invoice[]> {
+  const res = await apiClient.get('/api/invoices/', { params });
+  return res.data;
 }
 
+export async function fetchInvoice(id: string): Promise<Invoice> {
+  const res = await apiClient.get(`/api/invoices/${id}/`);
+  return res.data;
+}
+
+export async function createInvoice(payload: any): Promise<Invoice> {
+  const res = await apiClient.post('/api/invoices/', payload);
+  return res.data;
+}
+
+export async function cancelInvoice(id: string): Promise<Invoice> {
+  const res = await apiClient.post(`/api/invoices/${id}/cancel/`);
+  return res.data;
+}
+
+// 🏦 Virtual Account Provisioning APIs
+export async function provisionVirtualAccount(customerId: string): Promise<VirtualAccount> {
+  const res = await apiClient.post('/api/virtual-accounts/provision/', { customer_id: customerId });
+  return res.data;
+}
+
+// 💸 Payment & Claims APIs
+export async function fetchPayments(params?: any): Promise<Payment[]> {
+  const res = await apiClient.get('/api/payments/', { params });
+  return res.data;
+}
+
+export async function assignUnmatchedPayment(id: string, payload: { customer: string; invoice?: string }): Promise<Payment> {
+  const res = await apiClient.post(`/api/payments/${id}/assign/`, payload);
+  return res.data;
+}
+
+export async function markPaymentReviewed(id: string): Promise<Payment> {
+  const res = await apiClient.post(`/api/payments/${id}/mark-reviewed/`);
+  return res.data;
+}
+
+// 📈 Reports & Audit Ledger APIs
 export async function fetchCustomerReport(id: string): Promise<CustomerReport> {
-  const res = await fetch(`${API_BASE_URL}/api/reports/customers/${id}/statement/`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Failed to fetch report for customer ${id}`);
-  return res.json();
+  const res = await apiClient.get(`/api/reports/customers/${id}/statement/`);
+  return res.data;
 }
 
-export async function createCustomer(payload: { full_name: string; email: string; phone: string; business_name?: string }): Promise<Customer> {
-  const res = await fetch(`${API_BASE_URL}/api/customers/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || 'Failed to create customer');
-  }
-  return res.json();
+// 🔔 Notifications APIs
+export async function fetchNotifications(params?: any): Promise<NotificationItem[]> {
+  const res = await apiClient.get('/api/notifications/', { params });
+  return res.data;
 }
 
-export async function createInvoice(payload: { customer: string; amount: number; description?: string; due_date: string; invoice_number: string }): Promise<Invoice> {
-  const res = await fetch(`${API_BASE_URL}/api/invoices/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || 'Failed to create invoice');
-  }
-  return res.json();
+export async function fetchUnreadNotifications(): Promise<NotificationItem[]> {
+  const res = await apiClient.get('/api/notifications/unread/');
+  return res.data;
 }
 
+export async function markNotificationRead(id: string): Promise<NotificationItem> {
+  const res = await apiClient.post(`/api/notifications/${id}/mark-read/`);
+  return res.data;
+}
+
+export async function markAllNotificationsRead(): Promise<any> {
+  const res = await apiClient.post('/api/notifications/mark-all-read/');
+  return res.data;
+}
+
+// 🔄 Webhook simulation
 export async function triggerWebhook(payload: { destination_account_number: string; amount: number; reference?: string; sender_name?: string; sender_account_number?: string }): Promise<any> {
-  const res = await fetch(`${API_BASE_URL}/api/webhooks/nomba/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      event: 'virtual_account.payment_received',
-      data: {
-        account_number: payload.destination_account_number,
-        amount: payload.amount,
-        reference: payload.reference || `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
-        sender_name: payload.sender_name || 'Test Sender',
-        sender_account_number: payload.sender_account_number || '0011223344',
-        bank_name: 'Access Bank'
-      }
-    }),
+  const res = await apiClient.post('/api/webhooks/nomba/', {
+    event: 'virtual_account.payment_received',
+    data: {
+      account_number: payload.destination_account_number,
+      amount: payload.amount,
+      reference: payload.reference || `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+      sender_name: payload.sender_name || 'Test Sender',
+      sender_account_number: payload.sender_account_number || '0011223344',
+      bank_name: 'Access Bank'
+    }
   });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || errorData.detail || 'Failed to trigger webhook');
-  }
-  return res.json();
+  return res.data;
 }
 
+// Formatting helpers
 export function formatNaira(amount: number | string): string {
   const val = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(val)) return '₦0.00';
@@ -183,4 +289,14 @@ export function formatDate(dateString: string): string {
     month: 'short',
     day: 'numeric'
   });
+}
+
+export async function seedDemoData(): Promise<any> {
+  const res = await apiClient.post('/api/customers/demo/', { action: 'seed' });
+  return res.data;
+}
+
+export async function resetDemoData(): Promise<any> {
+  const res = await apiClient.post('/api/customers/demo/', { action: 'reset' });
+  return res.data;
 }
