@@ -13,24 +13,34 @@ import {
   Send,
   Settings,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchPayments } from '@/lib/api';
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Invoices', href: '/invoices', icon: FileText },
-  { name: 'Payments Feed', href: '/payments', icon: DollarSign },
-  { name: 'Reports & Audit', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Webhook Simulator', href: '/webhook-demo', icon: Send },
+  { name: 'Dashboard',         href: '/dashboard',     icon: LayoutDashboard },
+  { name: 'Customers',         href: '/customers',     icon: Users },
+  { name: 'Invoices',          href: '/invoices',      icon: FileText },
+  { name: 'Payments Feed',     href: '/payments',      icon: DollarSign },
+  { name: 'Reports & Audit',   href: '/reports',       icon: BarChart3 },
+  { name: 'Notifications',     href: '/notifications', icon: Bell },
+  { name: 'Settings',          href: '/settings',      icon: Settings },
+  { name: 'Webhook Simulator', href: '/webhook-demo',  icon: Send },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [unmatchedCount, setUnmatchedCount] = useState(0);
+
+  useEffect(() => {
+    fetchPayments({ status: 'UNMATCHED' })
+      .then(data => setUnmatchedCount(data.length))
+      .catch(() => {});
+  }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('paypilot_demo_session');
@@ -72,7 +82,14 @@ export default function Sidebar() {
                 }`}
               >
                 <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                {item.name}
+                <span className="flex-1">{item.name}</span>
+                {item.href === '/payments' && unmatchedCount > 0 && (
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'
+                  }`}>
+                    {unmatchedCount}
+                  </span>
+                )}
               </Link>
             );
           })}

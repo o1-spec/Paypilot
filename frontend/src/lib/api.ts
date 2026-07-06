@@ -183,6 +183,11 @@ export async function createCustomer(payload: any): Promise<Customer> {
   return res.data;
 }
 
+export async function updateCustomer(id: string, payload: any): Promise<Customer> {
+  const res = await apiClient.patch(`/api/customers/${id}/`, payload);
+  return res.data;
+}
+
 // 🧾 Invoice APIs
 export async function fetchInvoices(params?: any): Promise<Invoice[]> {
   const res = await apiClient.get('/api/invoices/', { params });

@@ -1,263 +1,230 @@
-# ✈️ PayPilot
+# PayPilot
 
-### Automated Payment Operations & Invoice Reconciliation powered by Nomba Virtual Accounts.
+**Dedicated Virtual Accounts & Automatic Payment Reconciliation for Nigerian Businesses**
 
----
-
-## 🏆 Hackathon Track
-**Dedicated Virtual Accounts**
+> DevCareer × Nomba Hackathon Project — Built on Nomba's Virtual Account Infrastructure
 
 ---
 
-## 💡 One-Line Summary
-PayPilot helps Nigerian businesses automate cash collections by provisioning persistent, dedicated virtual accounts to customers and instantly reconciling incoming transfers against pending invoices.
+## What is PayPilot?
+
+PayPilot helps businesses assign a **dedicated virtual bank account** to every customer. When a customer makes a bank transfer, Nomba notifies PayPilot via webhook. PayPilot automatically identifies the customer, matches the payment to their oldest pending invoice, updates the invoice status, and notifies the merchant — **no manual work required**.
 
 ---
 
-## 🛑 The Problem
-Many Nigerian businesses still receive payments through bank transfers. The current reconciliation loop is highly manual and error-prone:
-1. Customer initiates a bank transfer.
-2. Merchant receives an SMS or bank alert.
-3. Merchant checks the amount, matches it against a customer name or invoice, and updates a spreadsheet.
-4. Merchant manually updates the customer order status.
+## Demo Quick Start
 
-This manual process doesn't scale. It leads to delays in order fulfillment, lost transactions, and hours spent auditing bank statements.
+### 1. Login with seed credentials
+| Field | Value |
+|---|---|
+| Email | `info@gracefoods.ng` |
+| Password | `password` |
 
----
+### 2. Webhook Demo (most impressive for judges)
+1. Go to **Webhook Simulator** in the sidebar
+2. Click **Seed Demo Data** (first time only)
+3. Select a customer from the dropdown
+4. Click **Simulate Incoming Transfer**
+5. Watch the 6-step reconciliation pipeline animate in real time
 
-## 🎯 The Solution
-**PayPilot** automates cash operations using Nomba's Dedicated Virtual Accounts API. 
-* **Persistent Customer Accounts**: Every registered customer gets a dedicated, permanent virtual account number.
-* **Auto-Reconciliation**: When money enters a virtual account, Nomba fires a webhook payload to PayPilot.
-* **Real-time Invoice Resolution**: The PayPilot engine instantly maps the transfer to the corresponding customer profile, matches it against the oldest outstanding invoice, updates the billing status (Paid, Partial, or Overpaid), and registers the payment.
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-* **Framework**: Next.js 15+ (App Router)
-* **Language**: TypeScript
-* **Styling**: Tailwind CSS
-* **Icons**: Lucide Icons
-* **API Client**: Fetch API (Configured with type safety)
-
-### Backend
-* **Framework**: Django & Django REST Framework (DRF)
-* **Language**: Python 3.10+
-* **Database**: PostgreSQL (configured with Django ORM models)
+### 3. Unmatched Payment Flow
+1. In Webhook Simulator, tick **"Use unknown / unregistered account"**
+2. Enter any account number not assigned to a customer (e.g. `9999999999`)
+3. Simulate the transfer → payment is saved as UNMATCHED
+4. Go to **Payments Feed → Review Queue** tab
+5. Click **Claim** → assign to a customer → payment reconciled
 
 ---
 
-## 📐 Architecture Overview
+## Full Setup Instructions
 
-The system diagram below illustrates the relationship between the Next.js merchant portal, the Django REST backend, and Nomba's webhook dispatcher:
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- SQLite (bundled) or PostgreSQL
 
-```mermaid
-graph TD
-    %% Next.js Frontend
-    subgraph Frontend [Next.js Merchant Portal]
-        UI[Dashboard / Customers / Invoices / Payments]
-        Console[Webhook Simulator Workbench]
-    end
+### Backend (Django)
 
-    %% Django Backend
-    subgraph Backend [Django REST API & Reconciliation Engine]
-        API[DRF API Endpoints]
-        Engine[Reconciliation Matcher]
-        WebhookReceiver[Webhook Event Listener]
-    end
+```bash
+cd backend
 
-    %% Database Models
-    subgraph Database [PostgreSQL Schema]
-        M[Merchant Model]
-        C[Customer Model]
-        VA[Virtual Account Model]
-        I[Invoice Model]
-        P[Payment Model]
-        W[Webhook Event Log]
-        N[Notification Model]
-    end
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-    %% Flow Relationships
-    UI -->|JSON requests| API
-    Console -->|Simulates transfer webhook| WebhookReceiver
-    WebhookReceiver -->|Logs Event| W
-    WebhookReceiver -->|Triggers| Engine
-    Engine -->|Queries Customers & Invoices| Database
-    Engine -->|Updates Status & Logs Payment| Database
-    API -->|Reads / Writes| Database
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# Create superuser (optional)
+python manage.py createsuperuser
+
+# Start server
+python manage.py runserver
+```
+
+Backend runs at: `http://localhost:8000`
+
+**Environment variables** — copy `.env.example` to `.env`:
+```env
+SECRET_KEY=your-django-secret-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+NOMBA_API_KEY=your-nomba-api-key        # optional for sandbox
+NOMBA_ACCOUNT_ID=your-account-id        # optional for sandbox
+```
+
+### Frontend (Next.js)
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+```
+
+Frontend runs at: `http://localhost:3000`
+
+**Environment variables** — create `frontend/.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ---
 
-## 🔌 Backend API Routes
+## Seeding Demo Data
 
-Detailed sample request/response payloads are documented inside the [REST API Reference Guide](file:///Users/macbook/Documents/Paypilot/backend/docs/api.md).
+Via the **Webhook Simulator page** in the UI:
+- Click **Seed Demo Data** → creates 3 customers with virtual accounts and pending invoices
+- Click **Reset Demo** → wipes all customers, payments, and invoices
 
-All resource management endpoints require a valid JWT bearer token inside the authorization header:
-`Authorization: Bearer <your_access_token>`
+Via the API directly:
+```bash
+# Seed
+curl -X POST http://localhost:8000/api/customers/demo/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "seed"}'
 
-
-### Authentication Endpoints
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `/api/auth/register/` | `POST` | Register a new merchant and receive signed JWT tokens |
-| `/api/auth/login/` | `POST` | Exchange email + password for signed access & refresh tokens |
-| `/api/auth/me/` | `GET` | Retrieve metadata of the currently logged-in merchant |
-| `/api/auth/logout/` | `POST` | Invalidate/blacklist the merchant's refresh token |
-| `/api/auth/token/refresh/` | `POST` | Exchange a valid refresh token for a new access token |
-
-### Resource Endpoints
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `/api/customers/` | `GET` | List all customers scoped to the logged-in merchant |
-| `/api/customers/` | `POST` | Register a customer & provision Nomba virtual account |
-| `/api/customers/{id}/` | `GET` | Retrieve specific customer profile and ledger |
-| `/api/customers/{id}/` | `PATCH` | Update customer metadata |
-| `/api/customers/{id}/` | `DELETE` | Remove customer profile |
-| `/api/invoices/` | `GET` | List merchant issued invoices |
-| `/api/invoices/` | `POST` | Issue a new invoice mapped to a customer |
-| `/api/invoices/{id}/` | `GET` | Retrieve invoice details |
-| `/api/invoices/{id}/` | `PATCH` | Edit invoice parameters |
-| `/api/payments/` | `GET` | View real-time incoming payments feed |
-| `/api/payments/{id}/` | `GET` | Retrieve transaction details |
-| `/api/dashboard/summary/` | `GET` | Compile merchant revenue and active metrics |
-| `/api/reports/customers/{id}/statement/` | `GET` | Export aggregate customer ledger reports |
-| `/api/webhooks/nomba/` | `POST` | Nomba Webhook receiver endpoint (No Authorization required) |
+# Reset
+curl -X POST http://localhost:8000/api/customers/demo/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"action": "reset"}'
+```
 
 ---
 
-## 🔄 Core Lifecycles & Logic
+## Architecture
 
-### 1. Mock Nomba Provisioning Flow
-When a merchant registers a customer profile on the dashboard, the backend triggers the provisioning flow:
-* **Account Name Generation**: Combines the Merchant Business Name and the Customer Name (e.g., `Grace Foods / Tunde Bakare`).
-* **Bank Mapping**: Assigns virtual accounts to **"Nomba Bank"** (or partner institutions).
-* **Unique Identification**: Generates a unique 10-digit account number sequence mapped directly to the customer in the database.
-
-### 2. Auto-Reconciliation Webhook Engine
-When an incoming transfer payload is POSTed to `/api/webhooks/nomba/`:
-1. **Locate Virtual Account**: The engine searches the database for the destination `account_number`.
-   * **If not found**: Logs the transaction status as `UNMATCHED` and highlights it on the payments feed for manual review.
-2. **Locate Pending Invoice**: If the account belongs to a registered customer, the engine retrieves their oldest unpaid or partially paid invoice (`PENDING` or `PARTIAL`).
-3. **Reconcile Amounts**:
-   * **Exact Match / Overpayment**: If the payment covers the outstanding balance, the invoice status changes to `PAID` (or `OVERPAID` if the transfer exceeded the due amount).
-   * **Underpayment**: Updates status to `PARTIAL` and decrements the balance.
-4. **Log Payment**: Creates a `Payment` object and associates it with the customer and resolved invoice.
-
----
-
-## ⚙️ Local Development Setup
-
-### Backend Setup (Django)
-
-1. **Activate Environment & Install Dependencies**:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-2. **Run Migrations**:
-   ```bash
-   python manage.py migrate
-   ```
-
-3. **Populate Seed Data**:
-   Pre-seeds default merchant, customer directories, and outstanding invoice records:
-   ```bash
-   python manage.py seed_data
-   ```
-
-4. **Start Dev Server**:
-   ```bash
-   python manage.py runserver
-   ```
-   API runs at **`http://localhost:8000`**.
+```
+Customer pays → Nomba VA receives transfer
+                       ↓
+              Nomba sends webhook POST
+                       ↓
+         /api/webhooks/nomba/ (AllowAny)
+                       ↓
+         ReconciliationService (atomic)
+         ├── Idempotency check (reference)
+         ├── Match virtual account → customer
+         ├── Find oldest PENDING invoice
+         ├── Update invoice (PAID/PARTIAL/OVERPAID)
+         ├── Create Notification
+         └── Return result
+```
 
 ---
 
-### Frontend Setup (Next.js)
+## API Reference
 
-1. **Install Dependencies**:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-2. **Boot Compiler Server**:
-   ```bash
-   npm run dev
-   ```
-   Portal opens at **`http://localhost:3000`**.
-
----
-
-## 🔐 Sandbox Demo Access
-To make live evaluation seamless, run the seed command to register the default demo merchant profile in the database:
-* **Email**: `info@gracefoods.ng`
-* **Password**: `password`
-
-To call protected resource endpoints, exchange credentials for a JWT token by posting to:
-`POST /api/auth/login/`
-Copy the returned `access` token and include it inside subsequent HTTP request headers:
-`Authorization: Bearer <your_access_token>`
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register/` | Register merchant |
+| POST | `/api/auth/login/` | Login, returns JWT |
+| GET | `/api/customers/` | List customers |
+| POST | `/api/customers/` | Create customer |
+| GET | `/api/customers/{id}/` | Customer detail |
+| POST | `/api/virtual-accounts/provision/` | Provision virtual account |
+| GET | `/api/invoices/` | List invoices |
+| POST | `/api/invoices/` | Create invoice |
+| POST | `/api/invoices/{id}/cancel/` | Cancel invoice |
+| GET | `/api/payments/` | List payments |
+| POST | `/api/payments/{id}/assign/` | Assign unmatched payment |
+| POST | `/api/payments/{id}/mark-reviewed/` | Flag for review |
+| POST | `/api/webhooks/nomba/` | Webhook receiver (Nomba) |
+| GET | `/api/dashboard/summary/` | Dashboard stats |
+| GET | `/api/reports/customers/{id}/statement/` | Customer statement |
+| GET | `/api/notifications/` | List notifications |
+| POST | `/api/notifications/mark-all-read/` | Mark all read |
 
 ---
 
-## 📸 Screenshots (Placeholders)
+## Tech Stack
 
-### 1. Merchant Dashboard Overview
-*Key metrics, collections chart, outstanding merchant balances, and active transaction logs.*
-`![Dashboard Screen](https://via.placeholder.com/800x450.png?text=PayPilot+Dashboard+Overview)`
-
-### 2. Webhook Simulator Workbench
-*An interactive developer workbench to pre-fill accounts, construct raw transfer payloads, fire alerts, and watch the reconciliation engine match entries in real-time.*
-`![Webhook simulator Screen](https://via.placeholder.com/800x450.png?text=PayPilot+Webhook+Simulator+Workbench)`
-
----
-
-## 📈 What is Left to Build & Stage 2 Nomba API Integration Plan
-
-### Current Status (Stage 1 Completed)
-* Completed database schema design (Django Models).
-* Implemented core business logic (Virtual Account provisioning mock, Webhook parsing, Auto-Reconciliation).
-* Built a Next.js 15+ frontend portal.
-* Completed a Webhook Developer Workbench.
-
-### Upcoming Roadmap (Stage 2 Integration Plan)
-To transition from a mock framework to production:
-1. **Nomba Account Provisioning API**: Replace our mock function with a client call to Nomba’s `/v1/accounts` endpoint:
-   ```python
-   # Future implementation snippet:
-   headers = {
-       "Authorization": f"Bearer {token}",
-       "accountId": MERCHANT_ACCOUNT_ID
-   }
-   payload = {
-       "accountRef": customer_uuid,
-       "phoneNumber": customer.phone,
-       "email": customer.email,
-       "bankCode": "100026", # Nomba Partner code
-       "accountName": f"{merchant.business_name} - {customer.full_name}"
-   }
-   response = requests.post("https://api.nomba.com/v1/accounts", json=payload, headers=headers)
-   ```
-2. **Nomba Webhook Signature Validation**: Implement cryptographic verification using Nomba's webhook secret signatures headers (`X-Nomba-Signature`) to guarantee inbound transaction payloads are authentic.
-3. **Advanced Reconciliation Analytics**: Introduce invoice reminders, automated SMS alerts for customers upon payment match, and accounting exports (CSV/Excel).
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 15, TypeScript, Tailwind CSS |
+| Backend | Django 5, Django REST Framework |
+| Auth | JWT (SimpleJWT) |
+| Database | SQLite (dev) / PostgreSQL (prod) |
+| Virtual Accounts | Nomba API (mocked in sandbox) |
+| Webhooks | Nomba webhook callbacks |
 
 ---
 
-## ✅ Final Backend Completion Checklist
+## Judging Criteria Coverage
 
-- [x] **Database Models & Relationships**: Complete Django models with robust integrity relations.
-- [x] **JWT Authentication (SimpleJWT)**: Secure user login, registration, me profiles, and blacklist logout.
-- [x] **Multi-Tenant Data Scoping**: All lookups, lists, and actions isolated by merchant session context.
-- [x] **Decoupled Provisioning Service**: Abstract base class provider interface for seamless production transition.
-- [x] **Self-Healing Webhook Reconciliation**: Idempotent duplicate check, raw webhook event logging, and transaction-isolated database adjustments.
-- [x] **Ledger Account Statement Reporting**: Chronologically ordered statement lines with credit/debit classifications and running balance.
-- [x] **Actionable Alert Notifications**: Status-based classification alerts with unread and batch mark-read endpoints.
-- [x] **CORS Configuration**: Fully enabled local origins for Next.js frontend calls.
-- [x] **Fully Passing Automated Test Suite**: Integration test suite verifying all 17 lifecycle scenarios.
+| Criterion | Implementation |
+|---|---|
+| ✅ Account Provisioning | `POST /api/virtual-accounts/provision/` — Nomba API call per customer |
+| ✅ Inbound Reconciliation | Webhook engine: idempotent, atomic, multi-status |
+| ✅ Customer Statements | Full ledger: invoices + payments + running balance |
+| ✅ Misdirected Payments | UNMATCHED flow → Review Queue → manual assign |
+| ✅ Developer API | Full REST API with JWT auth |
+| ✅ Identity Model | 1 customer → 1 persistent VA → many transactions |
+
+---
+
+## Project Structure
+
+```
+Paypilot/
+├── backend/
+│   ├── accounts/          # JWT auth, merchant profiles
+│   ├── customers/         # Customer CRUD + demo seed
+│   ├── virtual_accounts/  # Nomba provisioning
+│   ├── invoices/          # Invoice lifecycle
+│   ├── payments/          # Payment records + assignment
+│   ├── webhooks/          # Nomba webhook receiver
+│   ├── notifications/     # In-app notification system
+│   ├── dashboard/         # Aggregated summary API
+│   └── paypilot/          # Django settings + root URLs
+└── frontend/
+    └── src/
+        ├── app/
+        │   ├── page.tsx                    # Landing page
+        │   └── (dashboard)/
+        │       ├── dashboard/              # Main dashboard
+        │       ├── customers/              # Customer list + detail
+        │       ├── invoices/               # Invoice list + detail
+        │       ├── payments/               # Payments + review queue
+        │       ├── reports/                # Statements + analytics
+        │       ├── webhook-demo/           # Live reconciliation demo
+        │       └── settings/               # Profile + API config
+        ├── components/                     # Shared UI components
+        └── lib/
+            └── api.ts                      # Typed API client (axios)
+```
+
+---
+
+## Team
+
+Built by the PayPilot team for the DevCareer × Nomba Hackathon 2026.
+
+> *"We're not just building another payment dashboard. We're building a payment operations platform that demonstrates how Nomba's Dedicated Virtual Accounts can simplify payment collection, automate reconciliation, and give businesses complete visibility into their incoming payments."*

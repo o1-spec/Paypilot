@@ -8,11 +8,12 @@ import Table from '@/components/Table';
 import StatusBadge from '@/components/StatusBadge';
 import EmptyState from '@/components/EmptyState';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
-import { Users, Plus, ChevronRight, AlertTriangle, RefreshCw, Mail, Phone, CreditCard } from 'lucide-react';
+import { Users, Plus, ChevronRight, AlertTriangle, RefreshCw, Mail, Phone, CreditCard, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { 
   fetchCustomers, 
   createCustomer, 
+  updateCustomer,
   Customer 
 } from '@/lib/api';
 
@@ -31,6 +32,14 @@ export default function CustomersPage() {
 
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Edit state
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editBusiness, setEditBusiness] = useState('');
 
   const loadCustomers = async () => {
     setLoading(true);
@@ -73,6 +82,39 @@ export default function CustomersPage() {
     } catch (e: any) {
       const data = e.response?.data;
       setActionError(data?.error || data?.detail || 'Failed to register customer profile.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openEdit = (c: Customer) => {
+    setEditingCustomer(c);
+    setEditName(c.full_name);
+    setEditEmail(c.email);
+    setEditPhone(c.phone);
+    setEditBusiness(c.business_name || '');
+    setActionError(null);
+    setIsEditOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCustomer) return;
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      const updated = await updateCustomer(editingCustomer.id, {
+        full_name: editName,
+        email: editEmail,
+        phone: editPhone,
+        business_name: editBusiness || undefined,
+      });
+      setCustomers(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setIsEditOpen(false);
+      setEditingCustomer(null);
+    } catch (e: any) {
+      const data = e.response?.data;
+      setActionError(data?.error || data?.detail || 'Failed to update customer.');
     } finally {
       setActionLoading(false);
     }
@@ -159,16 +201,25 @@ export default function CustomersPage() {
       accessor: (c: Customer) => <StatusBadge status={c.status || 'ACTIVE'} />,
     },
     {
-      header: 'Ledger Audit',
+      header: 'Actions',
       align: 'right' as const,
       accessor: (c: Customer) => (
-        <Link
-          href={`/customers/${c.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1.5 transition-all"
-        >
-          View Account
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => openEdit(c)}
+            className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 transition-all"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </button>
+          <Link
+            href={`/customers/${c.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1.5 transition-all"
+          >
+            View
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       ),
     },
   ];
@@ -311,6 +362,55 @@ export default function CustomersPage() {
                   className="rounded-xl bg-slate-950 hover:bg-slate-900 text-xs font-bold text-white px-5 py-2.5 shadow-md disabled:opacity-50"
                 >
                   {actionLoading ? 'Registering...' : 'Register Customer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Customer Modal */}
+      {isEditOpen && editingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <h3 className="text-base font-bold text-slate-900 mb-1.5">Edit Customer</h3>
+            <p className="text-xs text-slate-400 mb-5">Update contact details for <strong>{editingCustomer.full_name}</strong>.</p>
+
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Full Name</label>
+                <input type="text" required value={editName} onChange={e => setEditName(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Email</label>
+                <input type="email" required value={editEmail} onChange={e => setEditEmail(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Phone</label>
+                  <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Business Name</label>
+                  <input type="text" value={editBusiness} onChange={e => setEditBusiness(e.target.value)} placeholder="Optional"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs py-2.5 px-3.5 outline-none focus:border-indigo-500 text-slate-800 transition-all" />
+                </div>
+              </div>
+
+              {actionError && (
+                <div className="rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold p-3 border border-rose-200">⚠️ {actionError}</div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button type="button" onClick={() => setIsEditOpen(false)}
+                  className="rounded-xl border border-slate-200 text-xs font-semibold px-4 py-2 hover:bg-slate-50 text-slate-600 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={actionLoading}
+                  className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white px-5 py-2.5 shadow-md disabled:opacity-50 transition-colors">
+                  {actionLoading ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
             </form>

@@ -49,6 +49,7 @@ export default function PaymentsPage() {
   const [searchVal, setSearchVal] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isSimOpen, setIsSimOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'review'>('all');
 
   // Claim states
   const [isClaimOpen, setIsClaimOpen] = useState(false);
@@ -175,12 +176,16 @@ export default function PaymentsPage() {
 
   const filteredPayments = payments.filter((p) => {
     const term = searchVal.toLowerCase();
-    return (
+    const matchesSearch = (
       (p.reference || '').toLowerCase().includes(term) ||
       (p.customer_name || '').toLowerCase().includes(term) ||
       (p.sender_name || '').toLowerCase().includes(term) ||
       (p.account_number || '').includes(term)
     );
+    const matchesTab = activeTab === 'review'
+      ? p.status === 'UNMATCHED' || p.status === 'REVIEW'
+      : true;
+    return matchesSearch && matchesTab;
   });
 
   const columns = [
@@ -288,6 +293,36 @@ export default function PaymentsPage() {
             {successMsg}
           </div>
         )}
+
+        {/* ── Tab switcher ──────────────────────────────────── */}
+        {(() => {
+          const unmatchedPayments = payments.filter(p => p.status === 'UNMATCHED' || p.status === 'REVIEW');
+          return (
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`text-[10px] font-bold px-4 py-2 rounded-lg transition-all ${
+                  activeTab === 'all' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                All Payments
+              </button>
+              <button
+                onClick={() => setActiveTab('review')}
+                className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-4 py-2 rounded-lg transition-all ${
+                  activeTab === 'review' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Review Queue
+                {unmatchedPayments.length > 0 && (
+                  <span className="bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                    {unmatchedPayments.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Dynamic visual diagram tracing the auto-reconciliation engine pipeline */}
         <div className="bg-slate-950 border border-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden hidden lg:block">
