@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum
 from customers.models import Customer
 from invoices.models import Invoice
@@ -9,23 +9,11 @@ from notifications.models import Notification
 from payments.serializers import PaymentSerializer
 from notifications.serializers import NotificationSerializer
 
-Merchant = get_user_model()
-
 class DashboardMetricsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         user = request.user
-        if not user.is_authenticated:
-            user = Merchant.objects.first()
-
-        if not user:
-            return Response({
-                "total_revenue": 0,
-                "outstanding_balance": 0,
-                "active_customers": 0,
-                "unmatched_transfers": 0,
-                "recent_payments": [],
-                "recent_notifications": []
-            })
 
         # Core aggregation metrics
         customers_count = Customer.objects.filter(merchant=user, status='active').count()

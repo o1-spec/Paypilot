@@ -3,7 +3,7 @@ import uuid
 
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    merchant = models.ForeignKey('accounts.Merchant', on_delete=models.CASCADE, related_name='notifications')
+    merchant = models.ForeignKey('accounts.Merchant', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     title = models.CharField(max_length=255)
     message = models.TextField()
     type = models.CharField(max_length=100, default='payment_received')

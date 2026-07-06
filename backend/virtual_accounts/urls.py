@@ -1,6 +1,10 @@
-from django.urls import path
-from .views import VirtualAccountProvisionView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import VirtualAccountViewSet
+
+router = DefaultRouter()
+router.register(r'', VirtualAccountViewSet, basename='virtual-account')
 
 urlpatterns = [
-    path('provision/', VirtualAccountProvisionView.as_view(), name='virtual-account-provision'),
+    path('', include(router.urls)),
 ]

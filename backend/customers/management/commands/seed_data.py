@@ -10,7 +10,7 @@ from virtual_accounts.models import VirtualAccount
 from invoices.models import Invoice
 from payments.models import Payment
 from notifications.models import Notification
-from virtual_accounts.services import NombaVirtualAccountService
+from virtual_accounts.services import VirtualAccountService
 
 Merchant = get_user_model()
 
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 status='active'
             )
             # Provision Virtual Account via Nomba Mock Service
-            NombaVirtualAccountService.provision_account(cust)
+            VirtualAccountService.provision_account(cust)
             customers.append(cust)
             self.stdout.write(f"Created customer '{cust.full_name}' -> Account: {cust.virtual_account.account_number}")
 

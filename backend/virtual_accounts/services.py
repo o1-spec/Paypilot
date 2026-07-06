@@ -1,37 +1,50 @@
-import random
-from virtual_accounts.models import VirtualAccount
+from django.conf import settings
+from django.db import transaction
+from django.utils.module_loading import import_string
+from .models import VirtualAccount
+from .providers import MockNombaProvider
 
-class NombaVirtualAccountService:
+class VirtualAccountService:
     @staticmethod
-    def provision_account(customer):
+    def get_provider():
+        # Allow setting provider path via settings.py (e.g. for Stage 2 Nomba API swap)
+        provider_path = getattr(settings, 'VIRTUAL_ACCOUNT_PROVIDER', 'virtual_accounts.providers.MockNombaProvider')
+        try:
+            provider_class = import_string(provider_path)
+            return provider_class()
+        except ImportError:
+            return MockNombaProvider()
+
+    @classmethod
+    def provision_account(cls, customer):
         """
-        Mock service to simulate Nomba dedicated virtual account creation.
-        Returns a VirtualAccount instance.
+        Provisions a virtual account for a customer if not already exists.
+        Returns the VirtualAccount instance.
         """
         # Return existing account if already provisioned
         if hasattr(customer, 'virtual_account'):
             return customer.virtual_account
 
-        # Generate unique 10-digit account number
-        prefix = random.choice(["101", "202", "303", "505"])
-        digits = "".join([str(random.randint(0, 9)) for _ in range(7)])
-        account_number = f"{prefix}{digits}"
+        provider = cls.get_provider()
+        account_data = provider.create_virtual_account(customer)
 
-        # Ensure uniqueness
-        while VirtualAccount.objects.filter(account_number=account_number).exists():
-            digits = "".join([str(random.randint(0, 9)) for _ in range(7)])
-            account_number = f"{prefix}{digits}"
+        with transaction.atomic():
+            # Double check inside atomic transaction to prevent race condition duplicates
+            existing = VirtualAccount.objects.filter(customer=customer).first()
+            if existing:
+                return existing
 
-        bank_name = random.choice(["Nomba Bank", "Providus Bank", "Wema Bank"])
-        account_name = f"PP - {customer.full_name}"
+            # Double check account number uniqueness
+            if VirtualAccount.objects.filter(account_number=account_data["account_number"]).exists():
+                account_data = provider.create_virtual_account(customer)
 
-        virtual_account = VirtualAccount.objects.create(
-            customer=customer,
-            account_number=account_number,
-            account_name=account_name,
-            bank_name=bank_name,
-            provider='Nomba',
-            status='active'
-        )
+            virtual_account = VirtualAccount.objects.create(
+                customer=customer,
+                account_number=account_data["account_number"],
+                account_name=account_data["account_name"],
+                bank_name=account_data["bank_name"],
+                provider=account_data["provider"],
+                status='active'
+            )
 
         return virtual_account

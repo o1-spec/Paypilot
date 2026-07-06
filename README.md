@@ -93,22 +93,35 @@ graph TD
 
 ## 🔌 Backend API Routes
 
+All resource management endpoints require a valid JWT bearer token inside the authorization header:
+`Authorization: Bearer <your_access_token>`
+
+### Authentication Endpoints
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/api/customers/` | `GET` | List all merchant customers |
-| `/api/customers/` | `POST` | Register a new customer & provision virtual account |
-| `/api/customers/{id}/` | `GET` | Retrieve specific customer profile |
+| `/api/auth/register/` | `POST` | Register a new merchant and receive signed JWT tokens |
+| `/api/auth/login/` | `POST` | Exchange email + password for signed access & refresh tokens |
+| `/api/auth/me/` | `GET` | Retrieve metadata of the currently logged-in merchant |
+| `/api/auth/logout/` | `POST` | Invalidate/blacklist the merchant's refresh token |
+| `/api/auth/token/refresh/` | `POST` | Exchange a valid refresh token for a new access token |
+
+### Resource Endpoints
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/customers/` | `GET` | List all customers scoped to the logged-in merchant |
+| `/api/customers/` | `POST` | Register a customer & provision Nomba virtual account |
+| `/api/customers/{id}/` | `GET` | Retrieve specific customer profile and ledger |
 | `/api/customers/{id}/` | `PATCH` | Update customer metadata |
 | `/api/customers/{id}/` | `DELETE` | Remove customer profile |
-| `/api/invoices/` | `GET` | List issued invoices |
+| `/api/invoices/` | `GET` | List merchant issued invoices |
 | `/api/invoices/` | `POST` | Issue a new invoice mapped to a customer |
 | `/api/invoices/{id}/` | `GET` | Retrieve invoice details |
 | `/api/invoices/{id}/` | `PATCH` | Edit invoice parameters |
 | `/api/payments/` | `GET` | View real-time incoming payments feed |
 | `/api/payments/{id}/` | `GET` | Retrieve transaction details |
-| `/api/dashboard/summary/` | `GET` | Compile global revenue and active metrics |
+| `/api/dashboard/summary/` | `GET` | Compile merchant revenue and active metrics |
 | `/api/reports/customers/{id}/statement/` | `GET` | Export aggregate customer ledger reports |
-| `/api/webhooks/nomba/` | `POST` | Nomba Webhook listener endpoint |
+| `/api/webhooks/nomba/` | `POST` | Nomba Webhook receiver endpoint (No Authorization required) |
 
 ---
 

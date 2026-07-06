@@ -14,4 +14,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'account_number', 'bank_name', 'invoice_number', 'amount', 'amount_paid', 
             'description', 'due_date', 'status', 'created_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'merchant', 'invoice_number', 'amount_paid', 'status', 'created_at']
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Invoice amount must be positive.")
+        return value
