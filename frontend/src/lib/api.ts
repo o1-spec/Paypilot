@@ -32,11 +32,16 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      // Avoid redirecting if we are already on the landing page
-      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+    const url: string = error.config?.url || '';
+    const isAuthEndpoint =
+      url.includes('/api/auth/login/') ||
+      url.includes('/api/auth/register/');
+
+    if (error.response && error.response.status === 401 && !isAuthEndpoint) {
+      // Token expired or session invalid — evict and redirect to login
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         localStorage.removeItem('paypilot_demo_session');
-        window.location.href = '/';
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);
