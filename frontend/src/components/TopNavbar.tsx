@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import SearchBar from './SearchBar';
 import NotificationDropdown from './NotificationDropdown';
-import { 
-  fetchNotifications, 
-  markNotificationRead, 
-  markAllNotificationsRead, 
-  NotificationItem 
+import {
+  fetchNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  NotificationItem,
 } from '@/lib/api';
 
 export default function TopNavbar({ title }: { title: string }) {
@@ -18,9 +18,8 @@ export default function TopNavbar({ title }: { title: string }) {
   const loadNotifications = async () => {
     try {
       const data = await fetchNotifications();
-      // Keep only first 10 for dropdown length efficiency
       setNotifications(data.slice(0, 10));
-    } catch (e) {}
+    } catch {}
   };
 
   useEffect(() => {
@@ -29,11 +28,9 @@ export default function TopNavbar({ title }: { title: string }) {
       try {
         const parsed = JSON.parse(session);
         if (parsed.businessName) setMerchantName(parsed.businessName);
-      } catch (e) {}
+      } catch {}
     }
-
     loadNotifications();
-    // Poll notifications every 10 seconds for real-time sandbox events mapping updates
     const timer = setInterval(loadNotifications, 10000);
     return () => clearInterval(timer);
   }, []);
@@ -41,55 +38,52 @@ export default function TopNavbar({ title }: { title: string }) {
   const handleMarkRead = async (id: string) => {
     try {
       await markNotificationRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-    } catch (e) {}
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    } catch {}
   };
 
   const handleMarkAllRead = async () => {
     try {
       await markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    } catch (e) {}
+    } catch {}
   };
 
-  return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white lg:px-8 pl-16 pr-8">
-      {/* Page Title */}
-      <h1 className="text-base font-bold text-slate-900 tracking-tight hidden sm:block">{title}</h1>
+  const initials = merchantName.substring(0, 2).toUpperCase();
 
-      {/* Search & Actions */}
-      <div className="flex items-center gap-5 w-full sm:w-auto justify-between sm:justify-end ml-auto">
-        {/* Search Bar */}
+  return (
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-[#E5E2DC] bg-white/95 backdrop-blur-sm lg:px-8 pl-16 pr-6 gap-4">
+      {/* Page Title */}
+      <h1 className="text-sm font-bold text-[#0F172A] tracking-tight hidden sm:block shrink-0">{title}</h1>
+
+      {/* Right side controls */}
+      <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
         <SearchBar
           value={searchVal}
           onChange={setSearchVal}
-          placeholder="Search collections, customers..."
+          placeholder="Search collections, customers…"
           className="hidden md:flex"
         />
 
-        <div className="flex items-center gap-4.5 ml-auto">
-          {/* Notifications Dropdown */}
+        <div className="flex items-center gap-3">
           <NotificationDropdown
             notifications={notifications}
             onMarkRead={handleMarkRead}
             onMarkAllRead={handleMarkAllRead}
           />
 
-          {/* Vertical Divider */}
-          <div className="h-5 w-px bg-slate-200" />
+          <div className="h-5 w-px bg-[#E5E2DC]" />
 
-          {/* User profile */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 font-bold text-indigo-600 shadow-sm border border-indigo-100">
-              {merchantName.substring(0, 2).toUpperCase()}
+          {/* User chip */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 font-bold text-amber-600 text-xs shadow-sm border border-amber-200">
+              {initials}
             </div>
-            <div className="hidden lg:block text-left shrink-0 whitespace-nowrap">
-              <span className="block text-xs font-semibold text-slate-800 tracking-tight leading-tight max-w-[140px] truncate" title={merchantName}>
+            <div className="hidden lg:block text-left shrink-0">
+              <span className="block text-xs font-semibold text-[#0F172A] tracking-tight leading-tight max-w-[140px] truncate" title={merchantName}>
                 {merchantName}
               </span>
-              <span className="block text-[10px] text-slate-400 font-semibold mt-0.5 tracking-wide">Developer Sandbox</span>
+              <span className="block text-[10px] text-[#94A3B8] font-semibold mt-0.5">Developer Sandbox</span>
             </div>
           </div>
         </div>
