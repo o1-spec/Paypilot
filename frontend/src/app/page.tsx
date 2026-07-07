@@ -15,6 +15,8 @@ import {
   ChevronDown,
   Users,
   ShieldCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 /* ── Scroll-reveal hook ──────────────────────────────────────── */
@@ -54,6 +56,8 @@ export default function LandingPage() {
   const [regPassword, setRegPassword] = useState('');
   const [regBusiness, setRegBusiness] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -499,10 +503,23 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Password</label>
-                  <input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#4F46E5] text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                  />
+                  <div className="relative">
+                    <input 
+                      type={showLoginPassword ? 'text' : 'password'} 
+                      required 
+                      value={loginPassword} 
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#4F46E5] text-xs py-2.5 pl-3.5 pr-10 outline-none text-[#0F172A] transition-all font-semibold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B] hover:text-[#4F46E5]"
+                    >
+                      {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <button type="submit" disabled={loading}
                   className="btn-press w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-xs font-bold text-white py-3 shadow-md disabled:opacity-50 transition-colors"
@@ -546,10 +563,23 @@ export default function LandingPage() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Password</label>
-                    <input type="password" required value={regPassword} onChange={(e) => setRegPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#4F46E5] text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showRegPassword ? 'text' : 'password'} 
+                        required 
+                        value={regPassword} 
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] focus:border-[#4F46E5] text-xs py-2.5 pl-3.5 pr-10 outline-none text-[#0F172A] transition-all font-semibold"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B] hover:text-[#4F46E5]"
+                      >
+                        {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <button type="submit" disabled={loading}
