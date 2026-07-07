@@ -5,6 +5,9 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "paypilot.settings")
 django.setup()
 
+from django.conf import settings
+settings.NOMBA_WEBHOOK_SIGNING_KEY = ""
+
 from django.test import Client
 from django.contrib.auth import get_user_model
 from customers.models import Customer
