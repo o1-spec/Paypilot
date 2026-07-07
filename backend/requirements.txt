@@ -7,3 +7,4 @@ djangorestframework-simplejwt
 requests
 gunicorn
 whitenoise
+dj-database-url

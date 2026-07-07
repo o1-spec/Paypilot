@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -72,10 +73,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'paypilot.wsgi.application'
 
 # Database Configuration
-# Configured for PostgreSQL via environment variables, falling back to SQLite if requested
+# Priority: DATABASE_URL (Render) → individual DB_* vars → SQLite (local dev)
 USE_SQLITE = os.environ.get('USE_SQLITE', 'False') == 'True'
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
-if USE_SQLITE or not os.environ.get('DB_NAME'):
+if DATABASE_URL:
+    # Render / production: use DATABASE_URL directly
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+elif USE_SQLITE or not os.environ.get('DB_NAME'):
+    # Local development: use SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -83,6 +95,7 @@ if USE_SQLITE or not os.environ.get('DB_NAME'):
         }
     }
 else:
+    # Local Postgres via individual vars
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
