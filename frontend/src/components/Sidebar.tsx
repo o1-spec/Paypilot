@@ -44,7 +44,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     localStorage.removeItem('paypilot_demo_session');
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   const navContent = (

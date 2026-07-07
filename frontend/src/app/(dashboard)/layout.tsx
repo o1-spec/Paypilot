@@ -15,7 +15,7 @@ export default function DashboardLayout({
   useEffect(() => {
     const session = localStorage.getItem('paypilot_demo_session');
     if (!session) {
-      router.push('/');
+      router.push('/login');
     } else {
       setAuthorized(true);
     }

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginMerchant, registerMerchant } from '@/lib/api';
 import {
   Zap,
   ArrowRight,
@@ -15,10 +14,6 @@ import {
   ChevronDown,
   Users,
   ShieldCheck,
-  Eye,
-  EyeOff,
-  Compass,
-  FileText,
   Code,
   DollarSign,
   Activity,
@@ -51,7 +46,7 @@ interface StickerProps {
 
 function Sticker({ children, className = "", rotation = "rotate-0" }: StickerProps) {
   return (
-    <div className={`absolute pointer-events-none select-none transition-all duration-350 hover:scale-105 hover:rotate-0 z-10 ${className} ${rotation}`}>
+    <div className={`absolute pointer-events-none select-none transition-all duration-355 hover:scale-105 hover:rotate-0 z-10 ${className} ${rotation}`}>
       <div className="relative border border-dashed border-neutral-300/80 p-1.5 bg-neutral-100/5 rounded-xl">
         {/* Resize Handles */}
         <span className="absolute -top-1 -left-1 w-1.5 h-1.5 border border-neutral-400 bg-white" />
@@ -70,80 +65,16 @@ function Sticker({ children, className = "", rotation = "rotate-0" }: StickerPro
 
 export default function LandingPage() {
   useScrollReveal();
-
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [regUsername, setRegUsername] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regBusiness, setRegBusiness] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showRegPassword, setShowRegPassword] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const data = await loginMerchant({ email: loginEmail, password: loginPassword });
-      const sessionData = {
-        businessName: data.user.business_name,
-        email: data.user.email,
-        token: data.access,
-        loginTime: new Date().toISOString(),
-      };
-      localStorage.setItem('paypilot_demo_session', JSON.stringify(sessionData));
-      router.push('/dashboard');
-    } catch (e: any) {
-      setErrorMsg(e.response?.data?.detail || e.response?.data?.error || 'Incorrect email or password.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const session = localStorage.getItem('paypilot_demo_session');
+    if (session) {
+      setIsAuthenticated(true);
     }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const data = await registerMerchant({
-        username: regUsername,
-        email: regEmail,
-        password: regPassword,
-        business_name: regBusiness,
-        phone: regPhone,
-      });
-      const sessionData = {
-        businessName: data.user.business_name,
-        email: data.user.email,
-        token: data.access,
-        loginTime: new Date().toISOString(),
-      };
-      localStorage.setItem('paypilot_demo_session', JSON.stringify(sessionData));
-      router.push('/dashboard');
-    } catch (e: any) {
-      const data = e.response?.data;
-      let msg = 'Failed to register merchant.';
-      if (data) {
-        if (data.email) msg = `Email: ${data.email[0]}`;
-        else if (data.username) msg = `Username: ${data.username[0]}`;
-        else if (data.detail) msg = data.detail;
-        else if (data.error) msg = data.error;
-      }
-      setErrorMsg(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []);
 
   const toggleFaq = (index: number) =>
     setExpandedFaq(expandedFaq === index ? null : index);
@@ -223,23 +154,32 @@ export default function LandingPage() {
             ))}
           </nav>
 
-          <button
-            onClick={() => { setErrorMsg(null); setIsAuthModalOpen(true); }}
-            className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-2.5 px-5 shadow-sm transition-all"
-          >
-            Open Demo Dashboard
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-2.5 px-5 shadow-sm transition-all"
+            >
+              Go to Dashboard
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-2.5 px-5 shadow-sm transition-all"
+            >
+              Open Demo Dashboard
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </header>
 
       {/* ── HERO & FLOATING CANVAS STICKERS ───────────────────── */}
       <section className="relative z-10 container mx-auto px-6 pt-24 pb-20 text-center min-h-[580px] flex flex-col justify-center max-w-5xl">
         
-        {/* Floating Canvas Stickers (visible on desktop) */}
+        {/* Floating Canvas Stickers */}
         <div className="absolute inset-0 z-0 pointer-events-none hidden lg:block">
           
-          {/* Sticker 1: Virtual Account */}
           <Sticker className="top-12 left-6" rotation="-rotate-6">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-50 text-amber-600 border border-amber-100">
@@ -254,7 +194,6 @@ export default function LandingPage() {
             </div>
           </Sticker>
 
-          {/* Sticker 2: Webhook Live Status */}
           <Sticker className="top-48 left-16" rotation="rotate-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Activity className="h-3.5 w-3.5 text-emerald-500" />
@@ -268,7 +207,6 @@ export default function LandingPage() {
             </div>
           </Sticker>
 
-          {/* Sticker 3: Code verification */}
           <Sticker className="bottom-14 left-10" rotation="-rotate-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Code className="h-3.5 w-3.5 text-amber-500" />
@@ -279,7 +217,6 @@ export default function LandingPage() {
             </pre>
           </Sticker>
 
-          {/* Sticker 4: Critic review reconciliation */}
           <Sticker className="top-8 right-6" rotation="rotate-6">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100">
@@ -294,7 +231,6 @@ export default function LandingPage() {
             </div>
           </Sticker>
 
-          {/* Sticker 5: Credit tracking */}
           <Sticker className="top-40 right-14" rotation="-rotate-6">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-50 text-rose-600 border border-rose-100">
@@ -314,7 +250,6 @@ export default function LandingPage() {
             </div>
           </Sticker>
 
-          {/* Sticker 6: Unmatched payment queue */}
           <Sticker className="bottom-16 right-10" rotation="rotate-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
@@ -328,7 +263,6 @@ export default function LandingPage() {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-          {/* Badge */}
           <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E2DC] bg-white/80 px-3.5 py-1 text-xs text-[#0F172A] font-bold mb-3 shadow-xs animate-fade-up">
             <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
             Powered by Nomba Infrastructure
@@ -345,12 +279,21 @@ export default function LandingPage() {
 
           {/* Action Buttons */}
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-up delay-200">
-            <button
-              onClick={() => { setErrorMsg(null); setIsAuthModalOpen(true); }}
-              className="btn-press min-w-[180px] bg-neutral-900 text-white hover:bg-neutral-800 rounded-full font-bold text-xs py-3.5 px-6 shadow-lg shadow-neutral-900/10"
-            >
-              <Zap className="h-4 w-4 inline mr-1" /> Open Sandbox Dashboard
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="btn-press min-w-[180px] bg-neutral-900 text-white hover:bg-neutral-800 rounded-full font-bold text-xs py-3.5 px-6 shadow-lg shadow-neutral-900/10"
+              >
+                <Zap className="h-4 w-4 inline mr-1" /> Go to Dashboard
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push('/login')}
+                className="btn-press min-w-[180px] bg-neutral-900 text-white hover:bg-neutral-800 rounded-full font-bold text-xs py-3.5 px-6 shadow-lg shadow-neutral-900/10"
+              >
+                <Zap className="h-4 w-4 inline mr-1" /> Open Sandbox Dashboard
+              </button>
+            )}
             <a
               href="#works"
               className="btn-press min-w-[160px] border border-neutral-300 bg-white/80 hover:bg-neutral-50 text-neutral-900 rounded-full font-bold text-xs py-3.5 px-6"
@@ -562,13 +505,23 @@ export default function LandingPage() {
           <p className="text-xs text-[#64748B] max-w-md mx-auto font-semibold">
             Access the developer sandbox. Sign in with preset seed credentials to simulate webhook notifications.
           </p>
-          <button
-            onClick={() => { setErrorMsg(null); setIsAuthModalOpen(true); }}
-            className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3.5 px-6 shadow-md transition-all"
-          >
-            Open Sandbox Dashboard
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3.5 px-6 shadow-md transition-all"
+            >
+              Go to Dashboard
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3.5 px-6 shadow-md transition-all"
+            >
+              Open Sandbox Dashboard
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </section>
 
@@ -586,159 +539,6 @@ export default function LandingPage() {
           <a href="mailto:support@paypilot.co" className="hover:text-amber-500 transition-colors">Support</a>
         </div>
       </footer>
-
-      {/* ── AUTH MODAL ────────────────────────────────────────── */}
-      {isAuthModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-white border border-[#E5E2DC] p-8 shadow-xl animate-zoom-in text-left relative">
-            <button
-              onClick={() => setIsAuthModalOpen(false)}
-              className="absolute top-6 right-6 text-[#64748B] hover:text-[#0F172A] text-xs font-bold bg-[#FAFAF8] border border-[#E5E2DC] px-3 py-1.5 rounded-full transition-colors"
-            >
-              Close
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500">
-                <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
-              </div>
-              <div>
-                <span className="text-base font-extrabold tracking-tight text-[#0F172A]">Pay<span className="text-amber-500">Pilot</span></span>
-                <span className="block text-[7px] font-bold text-[#64748B] tracking-wider uppercase">Sandbox Account</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-[#64748B] leading-relaxed mb-6 font-semibold border-b border-[#F1F5F9] pb-4">
-              Manage customer accounts, invoices, and payment reconciliation from one workspace.
-            </p>
-
-            <div className="flex border-b border-[#E5E2DC] pb-px mb-6 text-xs font-bold">
-              {(['login', 'register'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => { setActiveTab(tab); setErrorMsg(null); }}
-                  className={`pb-3 px-6 transition-all border-b-2 capitalize ${activeTab === tab ? 'border-amber-500 text-amber-500' : 'border-transparent text-[#64748B] hover:text-[#0F172A]'}`}
-                >
-                  {tab === 'login' ? 'Sign In' : 'Create Account'}
-                </button>
-              ))}
-            </div>
-
-            {errorMsg && (
-              <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 p-3.5 animate-fade-down">
-                ⚠️ {errorMsg}
-              </div>
-            )}
-
-            {activeTab === 'login' ? (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Email Address</label>
-                  <input type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="e.g. info@gracefoods.ng"
-                    className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Password</label>
-                  <div className="relative">
-                    <input 
-                      type={showLoginPassword ? 'text' : 'password'} 
-                      required 
-                      value={loginPassword} 
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 pl-3.5 pr-10 outline-none text-[#0F172A] transition-all font-semibold"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B] hover:text-amber-500"
-                    >
-                      {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-                <button type="submit" disabled={loading}
-                  className="btn-press w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3 shadow-md disabled:opacity-50 transition-colors"
-                >
-                  {loading ? 'Signing in…' : 'Sign In'}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Username</label>
-                    <input type="text" required value={regUsername} onChange={(e) => setRegUsername(e.target.value)}
-                      placeholder="gracefoods"
-                      className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Business Name</label>
-                    <input type="text" required value={regBusiness} onChange={(e) => setRegBusiness(e.target.value)}
-                      placeholder="Grace Foods"
-                      className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Email Address</label>
-                  <input type="email" required value={regEmail} onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="info@gracefoods.ng"
-                    className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Phone</label>
-                    <input type="text" required value={regPhone} onChange={(e) => setRegPhone(e.target.value)}
-                      placeholder="+2348…"
-                      className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Password</label>
-                    <div className="relative">
-                      <input 
-                        type={showRegPassword ? 'text' : 'password'} 
-                        required 
-                        value={regPassword} 
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 pl-3.5 pr-10 outline-none text-[#0F172A] transition-all font-semibold"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegPassword(!showRegPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B] hover:text-amber-500"
-                      >
-                        {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <button type="submit" disabled={loading}
-                  className="btn-press w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3 shadow-md disabled:opacity-50 transition-colors"
-                >
-                  {loading ? 'Creating account…' : 'Create Account'}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </form>
-            )}
-
-            {activeTab === 'login' && (
-              <div className="mt-5 text-[9px] text-[#64748B] leading-normal border-t border-[#F1F5F9] pt-4 font-semibold">
-                💡 <strong className="text-[#0F172A]">Quick Access:</strong> Email&nbsp;
-                <strong className="text-[#0F172A]">info@gracefoods.ng</strong> · Password&nbsp;
-                <strong className="text-[#0F172A]">password</strong>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
