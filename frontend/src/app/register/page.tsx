@@ -9,7 +9,9 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
+  Loader2,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -18,10 +20,10 @@ export default function RegisterPage() {
   const [businessName, setBusinessName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     const session = localStorage.getItem('paypilot_demo_session');
@@ -33,7 +35,6 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg(null);
     try {
       const data = await registerMerchant({
         username,
@@ -49,17 +50,18 @@ export default function RegisterPage() {
         loginTime: new Date().toISOString(),
       };
       localStorage.setItem('paypilot_demo_session', JSON.stringify(sessionData));
-      router.push('/dashboard');
+      toast(`Workspace created for ${data.user.business_name}! Redirecting…`, 'success');
+      setTimeout(() => router.push('/dashboard'), 700);
     } catch (e: any) {
-      const data = e.response?.data;
-      let msg = 'Failed to register merchant.';
-      if (data) {
-        if (data.email) msg = `Email: ${data.email[0]}`;
-        else if (data.username) msg = `Username: ${data.username[0]}`;
-        else if (data.detail) msg = data.detail;
-        else if (data.error) msg = data.error;
+      const d = e.response?.data;
+      let msg = 'Failed to register. Please try again.';
+      if (d) {
+        if (d.email)    msg = `Email: ${d.email[0]}`;
+        else if (d.username) msg = `Username: ${d.username[0]}`;
+        else if (d.detail)   msg = d.detail;
+        else if (d.error)    msg = d.error;
       }
-      setErrorMsg(msg);
+      toast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -104,12 +106,6 @@ export default function RegisterPage() {
         <p className="text-xs text-[#64748B] font-semibold mb-6">
           Set up a new developer sandbox workspace to manage your collection rails.
         </p>
-
-        {errorMsg && (
-          <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 p-3.5 animate-fade-down">
-            ⚠️ {errorMsg}
-          </div>
-        )}
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -175,7 +171,8 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B] hover:text-amber-500"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B] hover:text-amber-500 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -186,10 +183,19 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-press w-full mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3 shadow-md disabled:opacity-50 transition-colors cursor-pointer"
+            className="btn-press w-full mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3 shadow-md disabled:opacity-60 transition-colors cursor-pointer"
           >
-            {loading ? 'Creating account…' : 'Create Account'}
-            <ArrowRight className="h-4 w-4" />
+            {loading ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Creating account…
+              </>
+            ) : (
+              <>
+                Create Account
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </form>
 
