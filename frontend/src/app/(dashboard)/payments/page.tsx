@@ -7,7 +7,7 @@ import Table from '@/components/Table';
 import StatusBadge from '@/components/StatusBadge';
 import EmptyState from '@/components/EmptyState';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
-import { DollarSign, Send, HelpCircle, Check, AlertCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Inbox, User, FileText, Bell, CheckCircle2, Loader2, X } from 'lucide-react';
+import { DollarSign, Send, HelpCircle, Check, AlertCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Inbox, User, FileText, Bell, CheckCircle2, Loader2, X, Info } from 'lucide-react';
 import { fetchPayments, fetchCustomers, assignUnmatchedPayment, markPaymentReviewed, triggerWebhook, Customer, Payment, formatNaira, formatDate } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
@@ -142,12 +142,27 @@ export default function PaymentsPage() {
       <main className="flex-1 p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">Payments Ledger</h1>
-            <p className="text-xs text-[#64748B] font-medium mt-0.5">Monitor real-time incoming cash transfers and map unmatched deposits.</p>
+            <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">Payments</h1>
+            <p className="text-xs text-[#64748B] font-medium mt-0.5">Real-time incoming transfers, auto-reconciled against customer invoices.</p>
           </div>
-          <button onClick={() => setIsSimOpen(true)} className="btn-press inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-white py-2.5 px-4 shadow-md shadow-amber-500/20 transition-all">
-            <Send className="h-4 w-4" /> Simulate Deposit
+          <button onClick={loadData} className="btn-press inline-flex items-center gap-2 rounded-xl border border-[#E5E2DC] bg-white hover:bg-[#FAFAF8] text-xs font-semibold text-[#64748B] py-2.5 px-4 shadow-sm transition-all">
+            <RefreshCw className="h-4 w-4 text-[#94A3B8]" /> Refresh
           </button>
+        </div>
+
+        {/* How it works banner */}
+        <div className="rounded-2xl bg-white border border-[#E5E2DC] p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+              <Info className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#0F172A] mb-1">How payments arrive automatically</h4>
+              <p className="text-[11px] text-[#64748B] leading-relaxed">
+                When a customer transfers money to their virtual account, Nomba fires a webhook to PayPilot. The engine instantly matches the deposit to the oldest pending invoice and updates the balance — no manual action needed. Unmatched deposits appear in the <strong>Review Queue</strong> for manual assignment.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -213,7 +228,7 @@ export default function PaymentsPage() {
         ) : (
           <div className="space-y-4">
             <Table columns={columns} data={filteredPayments} emptyState={
-              <EmptyState title="No payments reconciled" description="No incoming transfers have hit your accounts. Simulate a deposit to verify webhook flows." icon={DollarSign} action={{ label: 'Simulate Webhook', onClick: () => setIsSimOpen(true) }} />
+              <EmptyState title="No payments yet" description="Payments appear automatically when customers transfer funds to their virtual accounts. Use the Developer Console to trigger a test webhook." icon={DollarSign} action={{ label: 'Open Developer Console', onClick: () => window.location.href = '/webhook-demo' }} />
             } />
 
             {/* Expanded trace drawer */}
@@ -255,13 +270,13 @@ export default function PaymentsPage() {
         )}
       </main>
 
-      {/* Webhook Simulator Modal */}
+      {/* Test Webhook Modal */}
       {isSimOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-md rounded-2xl bg-white border border-[#E5E2DC] p-6 shadow-2xl">
             <button onClick={() => setIsSimOpen(false)} className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#64748B]"><X className="h-4 w-4" /></button>
-            <h3 className="text-base font-bold text-[#0F172A] mb-1">Webhook Payment Simulator</h3>
-            <p className="text-xs text-[#64748B] mb-5">Simulates Nomba virtual account transfer hook listeners.</p>
+            <h3 className="text-base font-bold text-[#0F172A] mb-1">Fire Test Webhook</h3>
+            <p className="text-xs text-[#64748B] mb-5">Manually trigger a Nomba transfer event to test the reconciliation engine.</p>
             <form onSubmit={handleSimulateWebhook} className="space-y-4">
               <div><label className={LABEL}>Destination Account</label>
                 <div className="flex gap-2">

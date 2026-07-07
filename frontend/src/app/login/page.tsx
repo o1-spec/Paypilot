@@ -99,7 +99,7 @@ export default function LoginPage() {
           Sign In
         </h1>
         <p className="text-xs text-[#64748B] font-semibold mb-6">
-          Access your simulated sandbox ledger and manage virtual collections.
+          Access your dashboard ledger and manage virtual collections.
         </p>
 
         <form onSubmit={handleLogin} className="space-y-4">

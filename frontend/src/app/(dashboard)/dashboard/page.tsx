@@ -78,6 +78,7 @@ export default function DashboardPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [merchantName, setMerchantName] = useState('');
   const { toast } = useToast();
 
   // Modal states
@@ -121,7 +122,16 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    const session = localStorage.getItem('paypilot_demo_session');
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.businessName) setMerchantName(parsed.businessName);
+      } catch {}
+    }
+    loadData();
+  }, []);
 
   const handleSeedDemo = async () => {
     setActionLoading(true);
@@ -328,37 +338,41 @@ export default function DashboardPage() {
           <div className="space-y-2 z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-[10px] font-bold text-amber-300 uppercase tracking-widest">
               <Zap className="h-3.5 w-3.5" />
-              PayPilot · Nomba Virtual Banking Sandbox
+              PayPilot · Powered by Nomba
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight">Welcome to the Control Panel</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              Welcome back{merchantName ? `, ${merchantName}` : ''} 👋
+            </h1>
             <p className="text-xs text-slate-400 max-w-xl font-medium leading-relaxed">
-              Monitor Nomba virtual accounts. Transmit mock bank transfers using the webhook simulator to test automatic reconciliation in real time.
+              Monitor virtual account collections, track invoice reconciliation, and manage your customer portfolio from one place.
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0 z-10">
             <button
-              onClick={() => setIsSimOpen(true)}
+              onClick={() => setIsCustModalOpen(true)}
+              className="btn-press inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-bold text-white py-3 px-5 transition-all"
+            >
+              <Users className="h-4 w-4" />
+              Add Customer
+            </button>
+            <button
+              onClick={() => setIsInvModalOpen(true)}
               className="btn-press inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-white py-3 px-5 shadow-lg shadow-amber-500/20 transition-all"
             >
-              <Send className="h-4 w-4" />
-              Simulate Inbound Deposit
+              <FileText className="h-4 w-4" />
+              Issue Invoice
             </button>
           </div>
         </div>
 
-        {/* ── SANDBOX DEMO PANEL ─────────────────────────────── */}
+        {/* ── RECONCILIATION PIPELINE INSIGHT ─────────────────── */}
         <div className="bg-white border border-[#E5E2DC] rounded-3xl p-6 shadow-sm space-y-5">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-[#E5E2DC] pb-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-700 uppercase tracking-wider">
-                <Sparkles className="h-3 w-3 text-amber-500" />
-                Judging Sandbox
-              </div>
-              <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight mt-1.5">Automatic Reconciliation Demo</h2>
-              <p className="text-[11px] text-[#64748B] mt-0.5 font-medium">Seed portfolios, clear records, and run live webhook reconciliation streams.</p>
+              <h2 className="text-sm font-extrabold text-[#0F172A] tracking-tight">Auto-Reconciliation Pipeline</h2>
+              <p className="text-[11px] text-[#64748B] mt-0.5 font-medium">How PayPilot processes every incoming transfer from Nomba automatically.</p>
             </div>
-
             <div className="flex items-center gap-3 w-full lg:w-auto justify-end flex-wrap">
               <button
                 onClick={handleSeedDemo}
@@ -366,71 +380,39 @@ export default function DashboardPage() {
                 className="btn-press inline-flex items-center gap-2 rounded-xl border border-[#E5E2DC] bg-[#FAFAF8] hover:bg-[#F0EDE8] text-xs font-semibold text-[#0F172A] py-2 px-4 shadow-sm transition-all disabled:opacity-50"
               >
                 <RefreshCw className={`h-3.5 w-3.5 text-[#64748B] ${actionLoading ? 'animate-spin' : ''}`} />
-                Seed Demo Data
+                Load Sample Data
               </button>
               <button
                 onClick={handleResetDemo}
                 disabled={actionLoading}
                 className="btn-press inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-semibold text-rose-700 py-2 px-4 shadow-sm transition-all disabled:opacity-50"
               >
-                Reset Demo
+                Clear Records
               </button>
-              <button
-                onClick={startSimulateDemo}
-                disabled={demoStep > 0}
-                className="btn-press inline-flex items-center gap-2 rounded-xl bg-[#0F172A] hover:bg-neutral-800 text-xs font-bold text-white py-2 px-4 shadow-md transition-all disabled:opacity-50"
+              <a
+                href="/webhook-demo"
+                className="btn-press inline-flex items-center gap-2 rounded-xl bg-[#0F172A] hover:bg-neutral-800 text-xs font-bold text-white py-2 px-4 shadow-md transition-all"
               >
                 <Send className="h-3.5 w-3.5" />
-                Simulate Incoming Transfer
-              </button>
+                Open Developer Console
+              </a>
             </div>
           </div>
 
-          {/* Stepper */}
-          {demoStep > 0 && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-5 space-y-4 animate-fade-down">
-              <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                  Auto-Reconciliation Engine Live Trace
-                </span>
-                <span className="text-[#94A3B8]">Step {demoStep} of 5</span>
+          {/* Pipeline steps always visible */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            {STEPS.map((step, i) => (
+              <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-[#E5E2DC] bg-[#FAFAF8]">
+                <div className="h-7 w-7 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center font-bold text-xs shrink-0 text-amber-700">
+                  {i + 1}
+                </div>
+                <div>
+                  <span className="block text-[11px] font-bold text-[#0F172A] leading-tight">{step.label}</span>
+                  <span className="block text-[9px] text-[#94A3B8] font-semibold mt-0.5">{step.sub}</span>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                {STEPS.map((step, i) => {
-                  const stepNum = i + 1;
-                  const done = demoStep > stepNum;
-                  const active = demoStep === stepNum;
-                  return (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all ${
-                        demoStep >= stepNum
-                          ? 'bg-white border-amber-200 shadow-sm'
-                          : 'bg-[#FAFAF8] border-[#E5E2DC] opacity-40'
-                      }`}
-                    >
-                      <div
-                        className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                          done
-                            ? 'bg-emerald-500 text-white'
-                            : active
-                            ? 'bg-amber-500 text-white animate-pulse'
-                            : 'bg-[#E5E2DC] text-[#94A3B8]'
-                        }`}
-                      >
-                        {done ? <CheckCircle2 className="h-4 w-4" /> : stepNum}
-                      </div>
-                      <div>
-                        <span className="block text-[11px] font-bold text-[#0F172A] leading-tight">{step.label}</span>
-                        <span className="block text-[9px] text-[#94A3B8] font-semibold mt-0.5">{step.sub}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* ── METRICS ROW ──────────────────────────────────────── */}
@@ -725,11 +707,11 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* Webhook Simulator */}
+      {/* Test Webhook (Dev Console shortcut) */}
       {isSimOpen && (
         <Modal onClose={() => setIsSimOpen(false)}>
-          <h3 className="text-base font-bold text-[#0F172A] mb-1">Nomba Webhook Simulator</h3>
-          <p className="text-xs text-[#64748B] mb-5">Simulate an inbound bank transfer deposit landing in the system.</p>
+          <h3 className="text-base font-bold text-[#0F172A] mb-1">Fire Test Webhook</h3>
+          <p className="text-xs text-[#64748B] mb-5">Manually trigger a Nomba transfer event to test the reconciliation engine.</p>
           <form onSubmit={handleTriggerWebhook} className="space-y-4">
             <div><label className={LABEL}>Target Virtual Account</label>
               <div className="flex gap-2">
@@ -739,7 +721,7 @@ export default function DashboardPage() {
                   {customers.map((c) => c.virtual_account && (
                     <option key={c.id} value={c.virtual_account.account_number}>{c.full_name} ({c.virtual_account.account_number})</option>
                   ))}
-                  <option value="9999999999">Unknown VA (test unmatched)</option>
+                  <option value="9999999999">Unknown VA (unmatched flow)</option>
                 </select>
               </div>
             </div>
@@ -760,8 +742,8 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E2DC]">
               <button type="button" onClick={() => setIsSimOpen(false)} className="rounded-xl border border-[#E5E2DC] text-xs font-semibold px-4 py-2 hover:bg-[#FAFAF8] text-[#64748B] transition-colors">Cancel</button>
-              <button type="submit" disabled={actionLoading} className="btn-press rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-bold text-white px-5 py-2.5 shadow-md shadow-amber-500/20 disabled:opacity-50 inline-flex items-center gap-2">
-                {actionLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</> : <><Send className="h-3.5 w-3.5" /> Simulate Deposit</>}
+              <button type="submit" disabled={actionLoading} className="btn-press rounded-xl bg-[#0F172A] hover:bg-neutral-800 text-xs font-bold text-white px-5 py-2.5 shadow-md disabled:opacity-50 inline-flex items-center gap-2">
+                {actionLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</> : <><Send className="h-3.5 w-3.5" /> Fire Webhook</>}
               </button>
             </div>
           </form>

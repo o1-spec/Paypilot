@@ -267,7 +267,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                 emptyState={
                   <EmptyState
                     title="No payments reconciled"
-                    description="No deposits have cleared this invoice balance yet. Wire a simulated payment to test."
+                    description="No deposits have cleared this invoice balance yet. Incoming transfers will reflect here automatically."
                     icon={DollarSign}
                   />
                 }

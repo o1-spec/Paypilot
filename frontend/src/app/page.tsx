@@ -85,8 +85,8 @@ export default function LandingPage() {
       a: 'PayPilot assigns a unique, persistent bank account number to each customer using Nomba infrastructure. When they pay via standard bank transfer, our webhook engine receives the deposit notification in real time, resolves the customer profile, matches the payment to their oldest pending invoice, and dispatches alerts.',
     },
     {
-      q: 'Can I simulate bank transfer webhook callbacks inside the sandbox?',
-      a: 'Yes. PayPilot includes a built-in webhook payment simulator. From the sandbox dashboard, you can trigger mock bank transfer callbacks, watch the step-by-step auto-reconciliation trace, seed demo invoices, or wipe the database clean.',
+      q: 'Does PayPilot support local testing tools for developers?',
+      a: 'Yes. PayPilot features a dedicated Developer Console. From there, you can fire test webhooks to observe the auto-reconciliation pipeline in real time, populate sample invoicing datasets, or reset your workspace database clean.',
     },
     {
       q: 'How are partial payments and overpayments handled?',
@@ -503,7 +503,7 @@ export default function LandingPage() {
             Ready to test automatic bank reconciliation?
           </h2>
           <p className="text-xs text-[#64748B] max-w-md mx-auto font-semibold">
-            Access the developer sandbox. Sign in with preset seed credentials to simulate webhook notifications.
+            Access the developer console. Sign in with seed credentials to test live webhook notifications.
           </p>
           {isAuthenticated ? (
             <button

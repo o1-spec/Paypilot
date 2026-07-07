@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import TopNavbar from '@/components/TopNavbar';
 import { fetchCustomers, fetchInvoices, triggerWebhook, seedDemoData, resetDemoData, Customer, Invoice, formatNaira } from '@/lib/api';
-import { Zap, Send, CheckCircle2, AlertTriangle, RefreshCw, Database, Trash2, User, FileText, Bell, DollarSign, Activity, Clock, Wifi, CircleDot } from 'lucide-react';
+import { Zap, Send, CheckCircle2, AlertTriangle, RefreshCw, Database, Trash2, User, FileText, Bell, DollarSign, Activity, Clock, Wifi, CircleDot, Terminal } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 type StepStatus = 'idle' | 'running' | 'done' | 'error';
@@ -143,16 +143,16 @@ export default function WebhookDemoPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="h-8 w-8 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/25">
-                <Zap className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded-xl bg-[#0F172A] flex items-center justify-center shadow-md">
+                <Terminal className="h-4 w-4 text-amber-400" />
               </div>
-              <h1 className="text-base font-extrabold text-[#0F172A] tracking-tight">Live Reconciliation Demo</h1>
-              <span className="rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider">
-                Nomba Sandbox
+              <h1 className="text-base font-extrabold text-[#0F172A] tracking-tight">Developer Console</h1>
+              <span className="rounded-full bg-[#F0EDE8] border border-[#E5E2DC] text-[#64748B] text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                Sandbox Only
               </span>
             </div>
             <p className="text-xs text-[#64748B] font-medium ml-11">
-              Simulate a bank transfer webhook and watch PayPilot reconcile it in real time.
+              Test the Nomba webhook reconciliation engine without a real bank transfer.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -167,13 +167,29 @@ export default function WebhookDemoPage() {
           </div>
         </div>
 
+        {/* Sandbox context banner */}
+        <div className="rounded-2xl border border-[#E5E2DC] bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-xl bg-[#F0EDE8] border border-[#E5E2DC] flex items-center justify-center shrink-0">
+              <Zap className="h-4 w-4 text-[#64748B]" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#0F172A] mb-1">Why does this exist?</h4>
+              <p className="text-[11px] text-[#64748B] leading-relaxed">
+                In production, Nomba <strong>automatically</strong> fires a webhook to PayPilot the moment a customer makes a bank transfer to their virtual account — no action needed from you.
+                Because this is a <strong>sandbox environment</strong>, Nomba can&apos;t reach your local server directly, so this console lets you manually trigger that same event and observe the full auto-reconciliation pipeline.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT: Config panel */}
           <div className="lg:col-span-4 space-y-5">
             <div className="bg-white border border-[#E5E2DC] rounded-2xl p-6 shadow-sm space-y-5">
               <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
                 <Activity className="h-4 w-4 text-amber-500" />
-                Transfer Parameters
+                Test Transfer Parameters
               </h3>
 
               {/* Customer selector */}
@@ -243,11 +259,11 @@ export default function WebhookDemoPage() {
               {simError && <div className="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-semibold p-3">⚠ {simError}</div>}
 
               <button onClick={handleSimulate} disabled={running || !destAccount}
-                className="btn-press w-full flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] disabled:opacity-50 text-xs font-bold text-white py-3.5 shadow-md shadow-amber-500/20 transition-all">
+                className="btn-press w-full flex items-center justify-center gap-2 rounded-xl bg-[#0F172A] hover:bg-neutral-800 active:scale-[0.98] disabled:opacity-50 text-xs font-bold text-white py-3.5 shadow-md transition-all">
                 {running ? (
-                  <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Simulating reconciliation…</>
+                  <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing webhook…</>
                 ) : (
-                  <><Send className="h-4 w-4" />{runCount > 0 ? 'Run Again' : 'Simulate Incoming Transfer'}</>
+                  <><Send className="h-4 w-4" />{runCount > 0 ? 'Fire Again' : 'Fire Test Webhook'}</>
                 )}
               </button>
             </div>
@@ -354,8 +370,8 @@ export default function WebhookDemoPage() {
               ) : !running && runCount === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[#E5E2DC] bg-white p-10 text-center space-y-2">
                   <Zap className="h-8 w-8 text-amber-200 mx-auto" />
-                  <h4 className="text-sm font-bold text-[#64748B]">Ready to simulate</h4>
-                  <p className="text-[10px] text-[#94A3B8] font-medium max-w-xs mx-auto">Select a customer, configure the transfer amount, and click &quot;Simulate Incoming Transfer&quot; to watch the reconciliation pipeline execute live.</p>
+                  <h4 className="text-sm font-bold text-[#64748B]">Ready to test</h4>
+                  <p className="text-[10px] text-[#94A3B8] font-medium max-w-xs mx-auto">Select a customer, configure the transfer amount, and click &quot;Fire Test Webhook&quot; to watch the reconciliation pipeline execute live.</p>
                 </div>
               ) : null}
             </div>
@@ -364,7 +380,7 @@ export default function WebhookDemoPage() {
             <div className="bg-white border border-[#E5E2DC] rounded-2xl p-6 shadow-sm">
               <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-[#94A3B8]" />
-                What just happened?
+                What this tests end-to-end
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10px] font-medium text-[#64748B]">
                 {[

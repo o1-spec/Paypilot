@@ -83,7 +83,7 @@ export default function TopNavbar({ title }: { title: string }) {
               <span className="block text-xs font-semibold text-[#0F172A] tracking-tight leading-tight max-w-[140px] truncate" title={merchantName}>
                 {merchantName}
               </span>
-              <span className="block text-[10px] text-[#94A3B8] font-semibold mt-0.5">Developer Sandbox</span>
+              <span className="block text-[10px] text-[#94A3B8] font-semibold mt-0.5">Developer Workspace</span>
             </div>
           </div>
         </div>

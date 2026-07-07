@@ -4,20 +4,23 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, FileText, DollarSign, BarChart3,
-  LogOut, Zap, Send, Settings, Menu, X, Bell,
+  LogOut, Zap, Settings, Menu, X, Bell, Terminal,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { fetchPayments } from '@/lib/api';
 
-const navItems = [
-  { name: 'Dashboard',         href: '/dashboard',     icon: LayoutDashboard },
-  { name: 'Customers',         href: '/customers',     icon: Users },
-  { name: 'Invoices',          href: '/invoices',      icon: FileText },
-  { name: 'Payments Feed',     href: '/payments',      icon: DollarSign },
-  { name: 'Reports & Audit',   href: '/reports',       icon: BarChart3 },
-  { name: 'Notifications',     href: '/notifications', icon: Bell },
-  { name: 'Settings',          href: '/settings',      icon: Settings },
-  { name: 'Webhook Simulator', href: '/webhook-demo',  icon: Send },
+const mainNav = [
+  { name: 'Dashboard',     href: '/dashboard',     icon: LayoutDashboard },
+  { name: 'Customers',     href: '/customers',     icon: Users },
+  { name: 'Invoices',      href: '/invoices',      icon: FileText },
+  { name: 'Payments',      href: '/payments',      icon: DollarSign },
+  { name: 'Reports',       href: '/reports',       icon: BarChart3 },
+  { name: 'Notifications', href: '/notifications', icon: Bell },
+  { name: 'Settings',      href: '/settings',      icon: Settings },
+];
+
+const devNav = [
+  { name: 'Developer Console', href: '/webhook-demo', icon: Terminal },
 ];
 
 export default function Sidebar() {
@@ -63,9 +66,9 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="space-y-0.5 px-3 py-5">
-          {navItems.map((item) => {
+        {/* Main Navigation */}
+        <nav className="space-y-0.5 px-3 pt-5 pb-2">
+          {mainNav.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             const Icon = item.icon;
             return (
@@ -92,6 +95,32 @@ export default function Sidebar() {
             );
           })}
         </nav>
+
+        {/* Developer Tools section */}
+        <div className="px-3 pb-4">
+          <div className="border-t border-[#E5E2DC] pt-4">
+            <span className="block text-[9px] font-bold tracking-widest text-[#94A3B8] uppercase px-3 mb-2">Developer Tools</span>
+            {devNav.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsMobileOpen(false)}
+                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all duration-150 ${
+                    isActive
+                      ? 'bg-[#0F172A] text-white shadow-sm'
+                      : 'text-[#64748B] hover:bg-[#F0EDE8] hover:text-[#0F172A]'
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? 'text-amber-400' : 'text-[#94A3B8]'}`} />
+                  <span className="flex-1">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
@@ -100,9 +129,9 @@ export default function Sidebar() {
         <div className="rounded-2xl bg-[#FAFAF8] p-3.5 border border-[#E5E2DC] mb-3 space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-bold tracking-wider text-[#94A3B8] uppercase">Sandbox Dev Mode</span>
+            <span className="text-[9px] font-bold tracking-wider text-emerald-600 uppercase">Nomba Connected</span>
           </div>
-          <span className="block text-[10px] text-[#64748B] font-medium">Provider: MockNomba</span>
+          <span className="block text-[10px] text-[#64748B] font-medium">Sandbox Environment</span>
           {businessName && (
             <span className="block text-[10px] font-bold text-[#0F172A] truncate">{businessName}</span>
           )}
@@ -112,7 +141,7 @@ export default function Sidebar() {
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E2DC] bg-white hover:bg-rose-50 hover:border-rose-200 text-xs font-bold text-[#64748B] hover:text-rose-600 py-2.5 shadow-sm transition-all duration-150"
         >
           <LogOut className="h-4 w-4" />
-          Logout Sandbox
+          Sign Out
         </button>
       </div>
     </div>
@@ -149,9 +178,9 @@ export default function Sidebar() {
       {isLogoutConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-[#E5E2DC] animate-zoom-in">
-            <h3 className="text-sm font-extrabold text-[#0F172A] mb-1.5">Sign Out Sandbox</h3>
+            <h3 className="text-sm font-extrabold text-[#0F172A] mb-1.5">Sign Out</h3>
             <p className="text-xs text-[#64748B] mb-5 leading-normal">
-              Are you sure you want to end your sandbox session? You'll be redirected to the login page.
+              Are you sure you want to sign out? You'll be redirected to the login page.
             </p>
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E2DC]">
               <button
