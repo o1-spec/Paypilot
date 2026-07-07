@@ -107,23 +107,23 @@ export default function LandingPage() {
 
   const featureCards = [
     { icon: ShieldCheck, title: 'Tenant Scoping', body: 'Merchant profiles and collection ledgers are isolated securely using standard JWT scoping rails.' },
-    { icon: Layers,      title: 'Overpayment Resolution', body: 'Excess payments are mapped directly to customer statement balance spreadsheets automatically.' },
-    { icon: Lock,        title: 'Safe Transaction History', body: 'Logs raw payload records to simplify payment disputes and audit trails.' },
-    { icon: Users,       title: 'Review Queues', body: 'Flag unmatched payments for manual review inside central queues with one-click assignment.' },
+    { icon: Layers, title: 'Overpayment Resolution', body: 'Excess payments are mapped directly to customer statement balance spreadsheets automatically.' },
+    { icon: Lock, title: 'Safe Transaction History', body: 'Logs raw payload records to simplify payment disputes and audit trails.' },
+    { icon: Users, title: 'Review Queues', body: 'Flag unmatched payments for manual review inside central queues with one-click assignment.' },
   ];
 
   const useCases = [
-    { title: 'Private Schools',         body: 'Assign virtual accounts to parents. Match school fee transfers to students automatically.' },
-    { title: 'Logistics & Delivery',    body: 'Reconcile on-demand cash-on-delivery payments from delivery riders in real time.' },
+    { title: 'Private Schools', body: 'Assign virtual accounts to parents. Match school fee transfers to students automatically.' },
+    { title: 'Logistics & Delivery', body: 'Reconcile on-demand cash-on-delivery payments from delivery riders in real time.' },
     { title: 'Distributors & Wholesalers', body: 'Track high-volume bank deposits from retail distributors before shipping warehouse stock.' },
-    { title: 'Professional Agencies',   body: 'Clear monthly client retainer invoices automatically without chasing bank receipts.' },
-    { title: 'Pharmacies & Retail',     body: 'Allow cashier departments to confirm bank transfers at physical checkouts instantly.' },
-    { title: 'Subscription Services',   body: 'Automatically provision customer wallets and activate subscriptions upon payment.' },
+    { title: 'Professional Agencies', body: 'Clear monthly client retainer invoices automatically without chasing bank receipts.' },
+    { title: 'Pharmacies & Retail', body: 'Allow cashier departments to confirm bank transfers at physical checkouts instantly.' },
+    { title: 'Subscription Services', body: 'Automatically provision customer wallets and activate subscriptions upon payment.' },
   ];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#FAFAF7] via-[#FCFAF8] to-[#F5F2EC] text-[#0F172A] flex flex-col overflow-x-hidden font-sans">
-      
+    <div className="relative min-h-screen bg-linear-to-b from-[#FAFAF7] via-[#FCFAF8] to-[#F5F2EC] text-[#0F172A] flex flex-col overflow-x-hidden font-sans">
+
       {/* Subtle Dot Grid Background */}
       <div
         className="absolute inset-0 opacity-[0.35] pointer-events-none"
@@ -147,7 +147,7 @@ export default function LandingPage() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#64748B]">
-            {['problem','works','features','businesses','faq'].map((id) => (
+            {['problem', 'works', 'features', 'businesses', 'faq'].map((id) => (
               <a key={id} href={`#${id}`} className="nav-link hover:text-[#0F172A] transition-colors capitalize">
                 {id === 'works' ? 'How It Works' : id === 'businesses' ? 'Use Cases' : id.charAt(0).toUpperCase() + id.slice(1)}
               </a>
@@ -159,7 +159,7 @@ export default function LandingPage() {
               onClick={() => router.push('/dashboard')}
               className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-2.5 px-5 shadow-sm transition-all"
             >
-              Go to Dashboard
+              Open Dashboard
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           ) : (
@@ -167,7 +167,7 @@ export default function LandingPage() {
               onClick={() => router.push('/login')}
               className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-2.5 px-5 shadow-sm transition-all"
             >
-              Open Demo Dashboard
+              Get Started
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           )}
@@ -176,10 +176,10 @@ export default function LandingPage() {
 
       {/* ── HERO & FLOATING CANVAS STICKERS ───────────────────── */}
       <section className="relative z-10 container mx-auto px-6 pt-24 pb-20 text-center min-h-[580px] flex flex-col justify-center max-w-5xl">
-        
+
         {/* Floating Canvas Stickers */}
         <div className="absolute inset-0 z-0 pointer-events-none hidden lg:block">
-          
+
           <Sticker className="top-12 left-6" rotation="-rotate-6">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-50 text-amber-600 border border-amber-100">
@@ -284,14 +284,14 @@ export default function LandingPage() {
                 onClick={() => router.push('/dashboard')}
                 className="btn-press min-w-[180px] bg-neutral-900 text-white hover:bg-neutral-800 rounded-full font-bold text-xs py-3.5 px-6 shadow-lg shadow-neutral-900/10"
               >
-                <Zap className="h-4 w-4 inline mr-1" /> Go to Dashboard
+                <Zap className="h-4 w-4 inline mr-1" /> Open Dashboard
               </button>
             ) : (
               <button
                 onClick={() => router.push('/login')}
                 className="btn-press min-w-[180px] bg-neutral-900 text-white hover:bg-neutral-800 rounded-full font-bold text-xs py-3.5 px-6 shadow-lg shadow-neutral-900/10"
               >
-                <Zap className="h-4 w-4 inline mr-1" /> Open Sandbox Dashboard
+                <Zap className="h-4 w-4 inline mr-1" /> Get Started
               </button>
             )}
             <a
@@ -322,8 +322,8 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { label: 'Reconciled Collections', value: '₦2,850,000.00', sub: 'Auto-matched via webhook', subColor: 'text-amber-600' },
-                { label: 'Outstanding Receivables', value: '₦450,000.00',  sub: 'Across active billing cycles',   subColor: 'text-[#64748B]', valueColor: 'text-rose-600' },
-                { label: 'Collection Efficiency',    value: '86.2%',         sub: 'Automatic clearings rate',      subColor: 'text-amber-600', valueColor: 'text-amber-500' },
+                { label: 'Outstanding Receivables', value: '₦450,000.00', sub: 'Across active billing cycles', subColor: 'text-[#64748B]', valueColor: 'text-rose-600' },
+                { label: 'Collection Efficiency', value: '86.2%', sub: 'Automatic clearings rate', subColor: 'text-amber-600', valueColor: 'text-amber-500' },
               ].map((card) => (
                 <div key={card.label} className="bg-white border border-[#E5E2DC] rounded-2xl p-5 space-y-1 card-hover shadow-xs">
                   <span className="block text-[8px] font-bold text-[#64748B] uppercase tracking-wider">{card.label}</span>
@@ -374,8 +374,8 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { n: '1', title: 'Provision Account',       body: 'Create customer profiles to provision dedicated bank account numbers via the Nomba API.', delay: 0 },
-              { n: '2', title: 'Receive Bank Deposits',    body: 'Customers transfer money via standard mobile banking apps directly to their virtual account.', delay: 120 },
+              { n: '1', title: 'Provision Account', body: 'Create customer profiles to provision dedicated bank account numbers via the Nomba API.', delay: 0 },
+              { n: '2', title: 'Receive Bank Deposits', body: 'Customers transfer money via standard mobile banking apps directly to their virtual account.', delay: 120 },
               { n: '3', title: 'Automatic Reconciliation', body: 'PayPilot matches incoming webhooks, marks the oldest pending invoice as PAID, and logs the statement.', delay: 240 },
             ].map((step) => (
               <div key={step.n} className="reveal space-y-4 text-center" style={{ transitionDelay: `${step.delay}ms` }}>
@@ -508,9 +508,9 @@ export default function LandingPage() {
           {isAuthenticated ? (
             <button
               onClick={() => router.push('/dashboard')}
-              className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3.5 px-6 shadow-md transition-all"
+              className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3.5 px-6 shadow-md transition-all animate-bounce"
             >
-              Go to Dashboard
+              Open Dashboard
               <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
@@ -518,7 +518,7 @@ export default function LandingPage() {
               onClick={() => router.push('/login')}
               className="btn-press inline-flex items-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3.5 px-6 shadow-md transition-all"
             >
-              Open Sandbox Dashboard
+              Get Started
               <ArrowRight className="h-4 w-4" />
             </button>
           )}
