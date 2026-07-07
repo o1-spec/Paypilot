@@ -44,8 +44,8 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (e: any) {
       setErrorMsg(
-        e.response?.data?.detail || 
-        e.response?.data?.error || 
+        e.response?.data?.detail ||
+        e.response?.data?.error ||
         'Incorrect email or password.'
       );
     } finally {
@@ -59,8 +59,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#FAFAF7] via-[#FCFAF8] to-[#F5F2EC] text-[#0F172A] flex flex-col justify-center items-center px-4 font-sans">
-      
+    <div className="relative min-h-screen bg-linear-to-b from-[#FAFAF7] via-[#FCFAF8] to-[#F5F2EC] text-[#0F172A] flex flex-col justify-center items-center px-4 font-sans">
+
       {/* Dot Grid Background */}
       <div
         className="absolute inset-0 opacity-[0.35] pointer-events-none"
@@ -71,7 +71,7 @@ export default function LoginPage() {
       />
 
       <div className="relative z-10 w-full max-w-md rounded-3xl bg-white border border-[#E5E2DC] p-8 shadow-xl animate-zoom-in">
-        
+
         {/* Header/Logo */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/" className="flex items-center gap-2.5">
@@ -83,7 +83,7 @@ export default function LoginPage() {
               <span className="block text-[7px] font-bold text-[#64748B] tracking-wider uppercase">Sandbox Portal</span>
             </div>
           </Link>
-          <Link 
+          <Link
             href="/"
             className="text-[10px] font-bold text-[#64748B] hover:text-[#0F172A] border border-[#E5E2DC] px-3 py-1 rounded-full bg-[#FAFAF8] transition-colors"
           >
@@ -107,10 +107,10 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Email Address</label>
-            <input 
-              type="email" 
-              required 
-              value={email} 
+            <input
+              type="email"
+              required
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. info@gracefoods.ng"
               className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
@@ -122,10 +122,10 @@ export default function LoginPage() {
               <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Password</label>
             </div>
             <div className="relative">
-              <input 
-                type={showPassword ? 'text' : 'password'} 
-                required 
-                value={password} 
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 pl-3.5 pr-10 outline-none text-[#0F172A] transition-all font-semibold"
@@ -140,8 +140,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="btn-press w-full mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3 shadow-md disabled:opacity-50 transition-colors cursor-pointer"
           >
@@ -151,7 +151,7 @@ export default function LoginPage() {
         </form>
 
         {/* Quick Access Card */}
-        <div 
+        <div
           onClick={handleQuickAccess}
           className="mt-6 p-3.5 border border-[#E5E2DC] bg-[#FAFAF8] rounded-2xl text-left cursor-pointer hover:border-amber-500/60 transition-all flex items-start gap-2.5"
         >

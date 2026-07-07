@@ -66,8 +66,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#FAFAF7] via-[#FCFAF8] to-[#F5F2EC] text-[#0F172A] flex flex-col justify-center items-center px-4 font-sans py-12">
-      
+    <div className="relative min-h-screen bg-linear-to-b from-[#FAFAF7] via-[#FCFAF8] to-[#F5F2EC] text-[#0F172A] flex flex-col justify-center items-center px-4 font-sans py-12">
+
       {/* Dot Grid Background */}
       <div
         className="absolute inset-0 opacity-[0.35] pointer-events-none"
@@ -78,7 +78,7 @@ export default function RegisterPage() {
       />
 
       <div className="relative z-10 w-full max-w-md rounded-3xl bg-white border border-[#E5E2DC] p-8 shadow-xl animate-zoom-in">
-        
+
         {/* Header/Logo */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/" className="flex items-center gap-2.5">
@@ -90,7 +90,7 @@ export default function RegisterPage() {
               <span className="block text-[7px] font-bold text-[#64748B] tracking-wider uppercase">Sandbox Portal</span>
             </div>
           </Link>
-          <Link 
+          <Link
             href="/"
             className="text-[10px] font-bold text-[#64748B] hover:text-[#0F172A] border border-[#E5E2DC] px-3 py-1 rounded-full bg-[#FAFAF8] transition-colors"
           >
@@ -115,10 +115,10 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Username</label>
-              <input 
-                type="text" 
-                required 
-                value={username} 
+              <input
+                type="text"
+                required
+                value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g. gracefoods"
                 className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
@@ -126,10 +126,10 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Business Name</label>
-              <input 
-                type="text" 
-                required 
-                value={businessName} 
+              <input
+                type="text"
+                required
+                value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="e.g. Grace Foods"
                 className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
@@ -139,10 +139,10 @@ export default function RegisterPage() {
 
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Email Address</label>
-            <input 
-              type="email" 
-              required 
-              value={email} 
+            <input
+              type="email"
+              required
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. info@gracefoods.ng"
               className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
@@ -152,10 +152,10 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Phone</label>
-              <input 
-                type="text" 
-                required 
-                value={phone} 
+              <input
+                type="text"
+                required
+                value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. +2348000000000"
                 className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 px-3.5 outline-none text-[#0F172A] transition-all font-semibold"
@@ -164,10 +164,10 @@ export default function RegisterPage() {
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Password</label>
               <div className="relative">
-                <input 
-                  type={showPassword ? 'text' : 'password'} 
-                  required 
-                  value={password} 
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full rounded-xl bg-[#FAFAF8] border border-[#E5E2DC] focus:border-amber-500 text-xs py-2.5 pl-3.5 pr-10 outline-none text-[#0F172A] transition-all font-semibold"
@@ -183,8 +183,8 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="btn-press w-full mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-xs font-bold text-white py-3 shadow-md disabled:opacity-50 transition-colors cursor-pointer"
           >
