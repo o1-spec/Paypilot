@@ -47,7 +47,8 @@ class NombaProvider(VirtualAccountProvider):
     def __init__(self):
         self.client_id = getattr(settings, 'NOMBA_CLIENT_ID', '')
         self.client_secret = getattr(settings, 'NOMBA_CLIENT_SECRET', '')
-        self.account_id = getattr(settings, 'NOMBA_ACCOUNT_ID', '')
+        self.account_id = getattr(settings, 'NOMBA_ACCOUNT_ID', '')         # Parent account ID (for accountId header)
+        self.sub_account_id = getattr(settings, 'NOMBA_SUB_ACCOUNT_ID', '') # Sub-account (for VA scoping)
         self.env = getattr(settings, 'NOMBA_ENV', 'sandbox')
         self.base_url = "https://api.nomba.com" if self.env == "production" else "https://sandbox.nomba.com"
         
@@ -103,7 +104,12 @@ class NombaProvider(VirtualAccountProvider):
             logger.error(f"Failed to authenticate with Nomba. Falling back to mock virtual account creation. Error: {e}")
             return self.mock_provider.create_virtual_account(customer)
 
-        url = f"{self.base_url}/v1/accounts/virtual"
+        # Use sub-account scope if provided (per Nomba hackathon email instructions)
+        if self.sub_account_id:
+            url = f"{self.base_url}/v1/accounts/{self.sub_account_id}/virtual"
+        else:
+            url = f"{self.base_url}/v1/accounts/virtual"
+
         headers = {
             "Authorization": f"Bearer {token}",
             "accountId": self.account_id,
