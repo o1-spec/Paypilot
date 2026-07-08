@@ -31,12 +31,12 @@ class Command(BaseCommand):
                 'is_superuser': True
             }
         )
+        merchant.set_password('password')
+        merchant.save()
         if created:
-            merchant.set_password('password')
-            merchant.save()
             self.stdout.write(self.style.SUCCESS(f'Created merchant: {merchant.email} (Password: "password")'))
         else:
-            self.stdout.write(f'Using existing merchant: {merchant.email}')
+            self.stdout.write(self.style.SUCCESS(f'Reset password to "password" for existing merchant: {merchant.email}'))
 
         # Clean existing customer data to avoid conflicts on repeat runs
         Customer.objects.filter(merchant=merchant).delete()
